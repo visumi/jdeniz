@@ -1,0 +1,14 @@
+import { Plus, Search, UserRound } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "../../components/ui/button";
+import { Card, CardContent } from "../../components/ui/card";
+import { Input } from "../../components/ui/input";
+import { Skeleton } from "../../components/ui/skeleton";
+import { useStudents } from "../../hooks/use-students";
+
+export function StudentsPage() {
+  const [search, setSearch] = useState("");
+  const students = useStudents(search);
+  return <div className="space-y-6"><section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-semibold text-primary">Sua base</p><h1 className="mt-1 text-3xl font-bold tracking-tight">Alunos</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">Encontre e mantenha seus cadastros em dia.</p></div><Button asChild><Link to="/students/new"><Plus className="size-4" />Cadastrar aluno</Link></Button></section><div className="relative max-w-md"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome" className="pl-9" aria-label="Buscar aluno por nome" /></div><Card><CardContent className="p-2 sm:p-3">{students.isPending ? <div className="space-y-2 p-2"><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /><Skeleton className="h-16 w-full" /></div> : students.isError ? <p className="m-2 rounded-lg bg-destructive/10 p-3 text-sm leading-5 text-destructive">Não foi possível carregar os alunos agora.</p> : students.data.length === 0 ? <div className="px-4 py-12 text-center"><div className="mx-auto grid size-11 place-items-center rounded-2xl bg-muted text-muted-foreground"><UserRound className="size-5" /></div><p className="mt-4 font-semibold">{search ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado."}</p><p className="mt-1 text-sm text-muted-foreground">{search ? "Tente outro nome." : "Cadastre seu primeiro aluno para começar."}</p>{!search && <Button asChild variant="secondary" className="mt-4"><Link to="/students/new">Cadastrar primeiro aluno</Link></Button>}</div> : <div role="list" aria-label="Lista de alunos">{students.data.map((student) => <Link role="listitem" key={student.id} to={`/students/${student.id}`} className="flex items-center justify-between gap-4 rounded-lg px-3 py-3.5 transition-colors hover:bg-accent"><div className="min-w-0"><p className="truncate font-semibold">{student.name}</p><p className="truncate text-sm text-muted-foreground">{student.email || student.phone || "Cadastro básico"}</p></div><span className="text-sm font-semibold text-primary">Abrir</span></Link>)}</div>}</CardContent></Card></div>;
+}

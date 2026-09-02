@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jdeniz-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "vars": {
+    "ALLOWED_ORIGIN": "http://localhost:5173"
+  },
+  "secrets": {
+    "required": [
+      "TURSO_URL",
+      "TURSO_AUTH_TOKEN",
+      "FIREBASE_PROJECT_ID",
+      "OWNER_EMAIL"
+    ]
+  },
+  "routes": [
+    {
+      "pattern": "jdeniz-api.isumi.com.br",
+      "custom_domain": true
+    }
+  ]
+}

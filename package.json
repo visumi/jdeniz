@@ -1,0 +1,54 @@
+{
+  "name": "jdeniz",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/copy-spa-fallback.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "api:dev": "wrangler dev --config apps/api/wrangler.jsonc",
+    "api:test": "vitest run --config apps/api/vitest.config.ts",
+    "db:migrate": "node scripts/apply-migrations.mjs"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@libsql/client": "^0.15.0",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@tanstack/react-query": "^5.89.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.6.1",
+    "firebase": "^12.4.0",
+    "jose": "^6.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-hook-form": "^7.62.0",
+    "react-router-dom": "^7.9.1",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.13.0",
+    "@cloudflare/workers-types": "^5.20260902.1",
+    "@tailwindcss/vite": "^4.1.13",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "jsdom": "^26.1.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.1.7",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.104.0"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}
