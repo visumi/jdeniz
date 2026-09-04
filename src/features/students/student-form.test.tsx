@@ -31,10 +31,12 @@ describe("StudentForm", () => {
     const user = userEvent.setup();
     render(<MemoryRouter><StudentForm /></MemoryRouter>);
 
-    await user.type(screen.getByLabelText("Nome completo"), "Ana Lima");
-    await user.type(screen.getByLabelText(/E-mail/), "ana@example.com");
+    await user.type(screen.getByLabelText(/Nome completo/), "Ana Lima");
+    await user.selectOptions(screen.getByLabelText(/Modalidade/), "online");
+    await user.type(screen.getByLabelText(/Data de nascimento/), "1990-04-12");
+    await user.type(screen.getByLabelText(/Data de início/), "2026-09-03");
     await user.click(screen.getByRole("button", { name: /salvar aluno/i }));
 
-    expect(mutateAsync).toHaveBeenCalledWith({ name: "Ana Lima", email: "ana@example.com", phone: null });
+    expect(mutateAsync).toHaveBeenCalledWith({ name: "Ana Lima", attendanceMode: "online", birthDate: "1990-04-12", startDate: "2026-09-03", pathology: null, observations: null, email: null, phone: null });
   });
 });

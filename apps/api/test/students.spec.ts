@@ -3,7 +3,7 @@ import { validateStudentInput } from "../src/students";
 
 describe("validateStudentInput", () => {
   it("normaliza campos opcionais", () => {
-    expect(validateStudentInput({ name: "  Ana Lima ", email: " ana@example.com ", phone: " " })).toEqual({ name: "Ana Lima", email: "ana@example.com", phone: null });
+    expect(validateStudentInput({ name: "  Ana Lima ", email: " ana@example.com ", phone: " " })).toEqual({ name: "Ana Lima", email: "ana@example.com", phone: null, attendanceMode: null, birthDate: null, startDate: null, pathology: null, observations: null });
   });
 
   it("exige nome", () => {

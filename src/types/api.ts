@@ -12,6 +12,11 @@ export interface Student {
   name: string;
   email: string | null;
   phone: string | null;
+  attendanceMode: "online" | "presencial" | null;
+  birthDate: string | null;
+  startDate: string | null;
+  pathology: string | null;
+  observations: string | null;
   createdAt: string;
   updatedAt: string;
 }

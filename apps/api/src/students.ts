@@ -5,6 +5,11 @@ export interface StudentInput {
   name?: string;
   email?: string | null;
   phone?: string | null;
+  attendanceMode?: "online" | "presencial" | null;
+  birthDate?: string | null;
+  startDate?: string | null;
+  pathology?: string | null;
+  observations?: string | null;
 }
 
 export interface Student {
@@ -12,6 +17,11 @@ export interface Student {
   name: string;
   email: string | null;
   phone: string | null;
+  attendanceMode: "online" | "presencial" | null;
+  birthDate: string | null;
+  startDate: string | null;
+  pathology: string | null;
+  observations: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +30,11 @@ interface ValidatedStudentInput {
   name: string;
   email: string | null;
   phone: string | null;
+  attendanceMode: "online" | "presencial" | null;
+  birthDate: string | null;
+  startDate: string | null;
+  pathology: string | null;
+  observations: string | null;
 }
 
 export function validateStudentInput(payload: StudentInput): ValidatedStudentInput {
@@ -30,12 +45,27 @@ export function validateStudentInput(payload: StudentInput): ValidatedStudentInp
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "invalid_email");
   const phone = normalizeOptional(payload.phone);
   if (phone && phone.length > 40) throw new HttpError(400, "phone_too_long");
-  return { name, email, phone };
+  const attendanceMode = payload.attendanceMode === "online" || payload.attendanceMode === "presencial" ? payload.attendanceMode : null;
+  if (payload.attendanceMode && !attendanceMode) throw new HttpError(400, "invalid_attendance_mode");
+  const birthDate = normalizeDate(payload.birthDate);
+  const startDate = normalizeDate(payload.startDate);
+  const pathology = normalizeOptional(payload.pathology);
+  if (pathology && pathology.length > 120) throw new HttpError(400, "pathology_too_long");
+  const observations = normalizeOptional(payload.observations);
+  if (observations && observations.length > 1000) throw new HttpError(400, "observations_too_long");
+  return { name, email, phone, attendanceMode, birthDate, startDate, pathology, observations };
 }
 
 function normalizeOptional(value: string | null | undefined): string | null {
   const normalized = value?.trim();
   return normalized ? normalized : null;
+}
+
+function normalizeDate(value: string | null | undefined): string | null {
+  const normalized = value?.trim();
+  if (!normalized) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) throw new HttpError(400, "invalid_date");
+  return normalized;
 }
 
 function mapStudent(row: DbRow): Student {
@@ -44,23 +74,29 @@ function mapStudent(row: DbRow): Student {
     name: readDbString(row, "name"),
     email: readDbNullableString(row, "email"),
     phone: readDbNullableString(row, "phone"),
+    attendanceMode: readDbNullableString(row, "attendance_mode") as Student["attendanceMode"],
+    birthDate: readDbNullableString(row, "birth_date"),
+    startDate: readDbNullableString(row, "start_date"),
+    pathology: readDbNullableString(row, "pathology"),
+    observations: readDbNullableString(row, "observations"),
     createdAt: readDbString(row, "created_at"),
     updatedAt: readDbString(row, "updated_at")
   };
 }
 
-const selectColumns = "id, name, email, phone, created_at, updated_at";
+const selectColumns = "students.id, students.name, students.email, students.phone, student_profiles.attendance_mode, student_profiles.birth_date, student_profiles.start_date, student_profiles.pathology, student_profiles.observations, students.created_at, students.updated_at";
+const studentSource = "students LEFT JOIN student_profiles ON student_profiles.student_id = students.id";
 
 export async function listStudents(db: Client, user: AuthUser, search = ""): Promise<Student[]> {
   const normalizedSearch = search.trim();
   const result = normalizedSearch
-    ? await db.execute({ sql: `SELECT ${selectColumns} FROM students WHERE owner_user_id = ? AND name LIKE ? ORDER BY name COLLATE NOCASE ASC`, args: [user.uid, `%${normalizedSearch}%`] })
-    : await db.execute({ sql: `SELECT ${selectColumns} FROM students WHERE owner_user_id = ? ORDER BY updated_at DESC, name COLLATE NOCASE ASC`, args: [user.uid] });
+    ? await db.execute({ sql: `SELECT ${selectColumns} FROM ${studentSource} WHERE students.owner_user_id = ? AND students.name LIKE ? ORDER BY students.name COLLATE NOCASE ASC`, args: [user.uid, `%${normalizedSearch}%`] })
+    : await db.execute({ sql: `SELECT ${selectColumns} FROM ${studentSource} WHERE students.owner_user_id = ? ORDER BY students.updated_at DESC, students.name COLLATE NOCASE ASC`, args: [user.uid] });
   return result.rows.map((row) => mapStudent(row as DbRow));
 }
 
 export async function getStudent(db: Client, user: AuthUser, id: string): Promise<Student> {
-  const result = await db.execute({ sql: `SELECT ${selectColumns} FROM students WHERE id = ? AND owner_user_id = ? LIMIT 1`, args: [id, user.uid] });
+  const result = await db.execute({ sql: `SELECT ${selectColumns} FROM ${studentSource} WHERE students.id = ? AND students.owner_user_id = ? LIMIT 1`, args: [id, user.uid] });
   if (!result.rows[0]) throw new HttpError(404, "student_not_found");
   return mapStudent(result.rows[0] as DbRow);
 }
@@ -69,6 +105,7 @@ export async function createStudent(db: Client, user: AuthUser, payload: Student
   const input = validateStudentInput(payload);
   const id = crypto.randomUUID();
   await db.execute({ sql: "INSERT INTO students (id, owner_user_id, name, email, phone) VALUES (?, ?, ?, ?, ?)", args: [id, user.uid, input.name, input.email, input.phone] });
+  await db.execute({ sql: "INSERT INTO student_profiles (student_id, attendance_mode, birth_date, start_date, pathology, observations) VALUES (?, ?, ?, ?, ?, ?)", args: [id, input.attendanceMode, input.birthDate, input.startDate, input.pathology, input.observations] });
   return getStudent(db, user, id);
 }
 
@@ -76,5 +113,6 @@ export async function updateStudent(db: Client, user: AuthUser, id: string, payl
   const input = validateStudentInput(payload);
   const result = await db.execute({ sql: "UPDATE students SET name = ?, email = ?, phone = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND owner_user_id = ?", args: [input.name, input.email, input.phone, id, user.uid] });
   if (result.rowsAffected === 0) throw new HttpError(404, "student_not_found");
+  await db.execute({ sql: "INSERT INTO student_profiles (student_id, attendance_mode, birth_date, start_date, pathology, observations) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(student_id) DO UPDATE SET attendance_mode = excluded.attendance_mode, birth_date = excluded.birth_date, start_date = excluded.start_date, pathology = excluded.pathology, observations = excluded.observations", args: [id, input.attendanceMode, input.birthDate, input.startDate, input.pathology, input.observations] });
   return getStudent(db, user, id);
 }

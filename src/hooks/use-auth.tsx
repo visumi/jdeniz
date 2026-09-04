@@ -8,6 +8,7 @@ interface AuthContextValue {
   user: User | null;
   profile: MeResponse | null;
   ready: boolean;
+  profileLoading: boolean;
   authError: string | null;
   signIn: () => Promise<void>;
   signOutUser: () => Promise<void>;
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<MeResponse | null>(null);
   const [ready, setReady] = useState(!firebaseConfigured);
+  const [profileLoading, setProfileLoading] = useState(firebaseConfigured);
   const [authError, setAuthError] = useState<string | null>(firebaseConfigured ? null : "Configure as credenciais do Firebase para entrar.");
 
   useEffect(() => {
@@ -28,8 +30,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(nextUser);
       setReady(true);
       setAuthError(null);
+      setProfileLoading(Boolean(nextUser));
       if (!nextUser) {
         setProfile(null);
+        setProfileLoading(false);
         return;
       }
 
@@ -40,14 +44,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         setProfile(null);
         setAuthError(error instanceof ApiError && error.status === 403 ? "Seu e-mail ainda não está autorizado para acessar o JDeniz." : "Não foi possível confirmar sua autorização agora.");
+      } finally {
+        setProfileLoading(false);
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (ready && !profileLoading) document.getElementById("boot-loading")?.remove();
+  }, [profileLoading, ready]);
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
     profile,
     ready,
+    profileLoading,
     authError,
     async signIn() {
       if (!firebaseAuth) throw new Error("firebase_not_configured");
@@ -59,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setProfile(null);
     }
-  }), [authError, profile, ready, user]);
+  }), [authError, profile, profileLoading, ready, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

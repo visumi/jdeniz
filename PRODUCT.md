@@ -29,6 +29,7 @@ Evitar aparência de CRM, planilha, sistema corporativo pesado ou painel adminis
 
 - Começar pela próxima ação do professor: cadastrar, localizar ou atualizar um aluno.
 - Tratar o mobile como ambiente principal, com alvos de toque confortáveis e decisões curtas.
+- Projetar primeiro para o viewport mobile. Telas maiores apenas redistribuem, espaçam ou ampliam o mesmo conteúdo; não recebem conteúdo exclusivo por breakpoint.
 - Fazer os dados se conectarem desde o início, usando o aluno como entidade central para futuras features.
 - Mostrar progresso e contexto sem recorrer a dashboards decorativos ou excesso de métricas.
 - Manter a confiança: permissões são verificadas no servidor e estados de erro são claros.

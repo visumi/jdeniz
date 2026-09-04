@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../lib/api";
 import { type Student, type StudentInput } from "../types/api";
 
-export function useStudents(search = "") {
+export function useStudents(search = "", options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["students", search],
     queryFn: () => apiRequest<Student[]>(`/students${search ? `?search=${encodeURIComponent(search)}` : ""}`),
+    enabled: options?.enabled ?? true,
     staleTime: 30_000
   });
 }
