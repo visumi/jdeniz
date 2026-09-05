@@ -32,11 +32,20 @@ describe("StudentForm", () => {
     render(<MemoryRouter><StudentForm /></MemoryRouter>);
 
     await user.type(screen.getByLabelText(/Nome completo/), "Ana Lima");
-    await user.selectOptions(screen.getByLabelText(/Modalidade/), "online");
-    await user.type(screen.getByLabelText(/Data de nascimento/), "1990-04-12");
-    await user.type(screen.getByLabelText(/Data de início/), "2026-09-03");
+    await user.click(screen.getByRole("combobox", { name: /Modalidade/ }));
+    await user.click(screen.getByRole("option", { name: "Online" }));
+    const month = new Date();
+    const dateLabel = (day: number) => new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(month.getFullYear(), month.getMonth(), day));
+    const dateValue = (day: number) => `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    await user.click(screen.getByLabelText(/Data de nascimento/));
+    await user.click(screen.getByRole("gridcell", { name: dateLabel(12) }));
+    await user.click(screen.getByLabelText(/Data de início/));
+    await user.click(screen.getByRole("gridcell", { name: dateLabel(3) }));
+    const phoneInput = screen.getByLabelText(/Número de telefone/);
+    await user.type(phoneInput, "11abc999990000");
     await user.click(screen.getByRole("button", { name: /salvar aluno/i }));
 
-    expect(mutateAsync).toHaveBeenCalledWith({ name: "Ana Lima", attendanceMode: "online", birthDate: "1990-04-12", startDate: "2026-09-03", pathology: null, observations: null, email: null, phone: null });
+    expect(phoneInput).toHaveValue("(11) 99999-0000");
+    expect(mutateAsync).toHaveBeenCalledWith({ name: "Ana Lima", attendanceMode: "online", birthDate: dateValue(12), startDate: dateValue(3), phone: "(11) 99999-0000", observations: null, email: null });
   });
 });

@@ -1,31 +1,19 @@
-import { AlertCircle, CheckCircle2, Clock3, Dumbbell, Plus, Search } from "lucide-react";
+import { AlertCircle, Cake, CalendarDays, CheckCircle2, Mail, Phone, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { cn } from "../../lib/utils";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { StudentAvatar } from "../../components/student-avatar";
-import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Skeleton } from "../../components/ui/skeleton";
 import { useStudents } from "../../hooks/use-students";
-import { formatDateOnly } from "../../lib/utils";
+import { cn, formatDateCompact, formatDateOnly } from "../../lib/utils";
 import { type Student } from "../../types/api";
 import { StudentForm } from "./student-form";
-
-type StatusFilter = "all" | "expired" | "dueSoon" | "active" | "noTraining";
-type StatusTone = "red" | "amber" | "green" | "slate";
-
-const statusTones: Record<StatusTone, { surface: string; selected: string; icon: string; label: string }> = {
-  red: { surface: "border-red-100 bg-red-50/60 text-red-950 hover:border-red-200 hover:bg-red-50", selected: "border-red-600 bg-red-600 text-white", icon: "bg-red-100 text-red-700", label: "text-red-700" },
-  amber: { surface: "border-amber-100 bg-amber-50/60 text-amber-950 hover:border-amber-200 hover:bg-amber-50", selected: "border-amber-500 bg-amber-500 text-white", icon: "bg-amber-100 text-amber-700", label: "text-amber-800" },
-  green: { surface: "border-emerald-100 bg-emerald-50/60 text-emerald-950 hover:border-emerald-200 hover:bg-emerald-50", selected: "border-emerald-600 bg-emerald-600 text-white", icon: "bg-emerald-100 text-emerald-700", label: "text-emerald-800" },
-  slate: { surface: "border-slate-200 bg-slate-50/70 text-slate-950 hover:border-slate-300 hover:bg-slate-50", selected: "border-slate-700 bg-slate-700 text-white", icon: "bg-white text-slate-600", label: "text-slate-700" }
-};
+import { Badge } from "../../components/ui/badge";
 
 export function StudentsPage() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchParams, setSearchParams] = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(() => searchParams.get("new") === "1");
   const students = useStudents();
@@ -33,18 +21,9 @@ export function StudentsPage() {
   const filteredStudents = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase("pt-BR");
     return allStudents.filter((student) => {
-      const matchesSearch = !normalizedSearch || [student.name, student.email, student.phone, student.pathology].filter(Boolean).some((value) => value!.toLocaleLowerCase("pt-BR").includes(normalizedSearch));
-      const matchesStatus = statusFilter === "all" || (statusFilter === "noTraining" && !hasTraining(student)) || (statusFilter === "expired" && false) || (statusFilter === "dueSoon" && false) || (statusFilter === "active" && false);
-      return matchesSearch && matchesStatus;
+      return !normalizedSearch || [student.name, student.email, student.phone].filter(Boolean).some((value) => value!.toLocaleLowerCase("pt-BR").includes(normalizedSearch));
     });
-  }, [allStudents, search, statusFilter]);
-
-  const statusItems = [
-    { key: "expired" as const, label: "Vencidos", count: 0, icon: AlertCircle, tone: "red" as const },
-    { key: "dueSoon" as const, label: "Vencem em 7 dias", count: 0, icon: Clock3, tone: "amber" as const },
-    { key: "active" as const, label: "Ativos", count: 0, icon: CheckCircle2, tone: "green" as const },
-    { key: "noTraining" as const, label: "Sem treino", count: allStudents.filter((student) => !hasTraining(student)).length, icon: Dumbbell, tone: "slate" as const }
-  ];
+  }, [allStudents, search]);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -56,30 +35,22 @@ export function StudentsPage() {
   };
 
   return <div className="space-y-7">
-    <Card className="border-red-200"><CardHeader className="p-4 sm:p-5"><div className="flex items-center gap-3"><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-sky-50 text-sky-700"><Dumbbell className="size-4" /></span><CardTitle>Treinos a vencer</CardTitle></div></CardHeader><CardContent className="grid grid-cols-2 gap-2 p-3 pt-0 sm:grid-cols-4 sm:p-4 sm:pt-0">{statusItems.map((item) => { const Icon = item.icon; const tone = statusTones[item.tone]; const selected = statusFilter === item.key; return <button key={item.key} type="button" aria-pressed={selected} className={cn("group flex min-w-0 cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 sm:p-4", selected ? tone.selected : tone.surface)} onClick={() => setStatusFilter(item.key)}><span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", selected ? "bg-white/15 text-white" : tone.icon)}><Icon className="size-4" /></span><span className="min-w-0"><span className="block text-2xl font-bold tracking-tight">{students.isPending ? "—" : item.count}</span><span className={cn("block truncate text-xs font-semibold", selected ? "text-white/80" : tone.label)}>{item.label}</span></span></button>; })}</CardContent></Card>
-    <Card className="overflow-hidden"><CardHeader className="gap-4 border-b border-sky-100 bg-white p-4 sm:p-5"><div className="flex items-center justify-between gap-3"><div><CardTitle>Cadastros de alunos</CardTitle><p className="mt-1 text-sm text-slate-600">{students.isPending ? "Carregando cadastros…" : `${filteredStudents.length} ${filteredStudents.length === 1 ? "cadastro encontrado" : "cadastros encontrados"}`}</p></div><Button type="button" size="sm" className="shrink-0" onClick={() => setDrawerOpen(true)}><Plus className="size-4" />Adicionar aluno</Button></div><div className="relative w-full sm:max-w-xs"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-sky-600" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome ou contato" className="border-sky-200 bg-white pl-9" aria-label="Filtrar cadastros de alunos" /></div></CardHeader><CardContent className="p-0">{students.isPending ? <LoadingState /> : students.isError ? <ErrorState onRetry={() => void students.refetch()} /> : filteredStudents.length === 0 ? <EmptyState hasFilters={Boolean(search || statusFilter !== "all")} onCreate={() => setDrawerOpen(true)} /> : <><MobileStudentList students={filteredStudents} /><DesktopStudentTable students={filteredStudents} /></>}</CardContent></Card>
+    <Card className="overflow-hidden"><CardHeader className="gap-4 border-b border-sky-100 bg-white p-4 sm:p-5"><div className="flex items-center justify-between gap-3"><div><CardTitle>Cadastros de alunos</CardTitle><p className="mt-1 text-sm text-slate-600">{students.isPending ? "Carregando cadastros…" : `${filteredStudents.length} ${filteredStudents.length === 1 ? "cadastro encontrado" : "cadastros encontrados"}`}</p></div><Button type="button" size="sm" className="shrink-0" onClick={() => setDrawerOpen(true)}><Plus className="size-4" />Adicionar aluno</Button></div><div className="relative w-full sm:max-w-xs"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-sky-600" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome ou contato" className="border-sky-200 bg-white pl-9" aria-label="Filtrar cadastros de alunos" /></div></CardHeader><CardContent className="p-0">{students.isPending ? <LoadingState /> : students.isError ? <ErrorState onRetry={() => void students.refetch()} /> : filteredStudents.length === 0 ? <EmptyState hasFilters={Boolean(search)} onCreate={() => setDrawerOpen(true)} /> : <><MobileStudentList students={filteredStudents} /><DesktopStudentTable students={filteredStudents} /></>}</CardContent></Card>
     <StudentForm drawer open={drawerOpen} onClose={closeDrawer} />
   </div>;
 }
 
-function hasTraining(_student: Student) {
-  return false;
-}
-
-function isComplete(student: Student) {
-  return Boolean(student.name && student.attendanceMode && student.birthDate && student.startDate);
-}
-
-function StudentStatus({ student }: { student: Student }) {
-  return isComplete(student) ? <Badge className="bg-emerald-50 text-emerald-700">Completo</Badge> : <Badge className="bg-amber-50 text-amber-700">Pendente</Badge>;
-}
-
 function MobileStudentList({ students }: { students: Student[] }) {
-  return <div className="space-y-2 p-3 md:hidden">{students.map((student) => <Link key={student.id} to={`/students/${student.id}`} className="group flex items-center gap-3 rounded-xl border border-sky-100 bg-white p-3 transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 focus-visible:bg-sky-50"><span className="transition-transform duration-200 group-hover:scale-105"><StudentAvatar name={student.name} /></span><span className="min-w-0 flex-1"><span className="flex items-center gap-2"><span className="truncate text-sm font-semibold text-slate-950">{student.name}</span><StudentStatus student={student} /></span><span className="mt-1 block truncate text-xs text-slate-600">{student.attendanceMode ? student.attendanceMode === "online" ? "Online" : "Presencial" : "Modalidade pendente"} · Início {formatDateOnly(student.startDate)}</span></span><span className="text-sky-600">→</span></Link>)}</div>;
+  return <div className="space-y-2 p-3 md:hidden">{students.map((student) => <Link key={student.id} to={`/students/${student.id}`} className="group/student-card block rounded-xl border border-sky-100 bg-white p-3 transition-[background-color,border-color] duration-200 hover:border-sky-200 hover:bg-sky-50 focus-visible:bg-sky-50"><div className="flex items-start gap-3"><span className="shrink-0 transition-transform duration-200 group-hover/student-card:scale-105"><StudentAvatar name={student.name} /></span><span className="min-w-0 flex-1"><span className="flex items-start justify-between gap-2"><span className="min-w-0 truncate text-sm font-semibold text-slate-950">{student.name}</span><AttendanceBadge mode={student.attendanceMode} className="shrink-0" /></span><span className="mt-1 flex min-w-0 items-center gap-1.5 truncate text-xs text-slate-600">{student.phone ? <><Phone aria-hidden="true" className="size-3.5 shrink-0 text-sky-600" /><span className="truncate">{student.phone}</span></> : student.email ? <><Mail aria-hidden="true" className="size-3.5 shrink-0 text-sky-600" /><span className="truncate">{student.email}</span></> : <span className="text-slate-400">Contato não informado</span>}</span><span className="mt-2 flex items-center gap-3 text-xs text-slate-600"><span className="inline-flex items-center gap-1.5" title="Data de nascimento"><Cake aria-hidden="true" className="size-3.5 text-sky-600" /><span className="sr-only">Data de nascimento: </span>{formatDateCompact(student.birthDate)}</span><span className="inline-flex items-center gap-1.5" title="Data de início"><CalendarDays aria-hidden="true" className="size-3.5 text-sky-600" /><span className="sr-only">Data de início: </span>{formatDateCompact(student.startDate)}</span></span></span></div>{student.observations && <span className="sr-only">Observações: {student.observations}</span>}</Link>)}</div>;
 }
 
 function DesktopStudentTable({ students }: { students: Student[] }) {
-  return <div className="hidden overflow-x-auto md:block"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b border-sky-100 bg-sky-50/60 text-xs font-semibold text-slate-600"><tr><th scope="col" className="px-5 py-3">Aluno</th><th scope="col" className="px-4 py-3">Modalidade</th><th scope="col" className="px-4 py-3">Nascimento</th><th scope="col" className="px-4 py-3">Início</th><th scope="col" className="px-4 py-3">Status</th><th scope="col" className="px-5 py-3 text-right">Ação</th></tr></thead><tbody className="divide-y divide-sky-100">{students.map((student) => <tr key={student.id} className="transition-colors duration-200 hover:bg-sky-50/60"><td className="px-5 py-4"><Link to={`/students/${student.id}`} className="group flex min-w-44 items-center gap-3 focus-visible:rounded-lg"><span className="transition-transform duration-200 group-hover:scale-105"><StudentAvatar name={student.name} /></span><span className="min-w-0"><span className="block truncate font-semibold text-slate-950">{student.name}</span><span className="block truncate text-xs text-slate-600">{student.email || student.phone || "Cadastro básico"}</span></span></Link></td><td className="px-4 py-4 text-slate-700">{student.attendanceMode === "online" ? "Online" : student.attendanceMode === "presencial" ? "Presencial" : "—"}</td><td className="px-4 py-4 text-slate-700">{formatDateOnly(student.birthDate)}</td><td className="px-4 py-4 text-slate-700">{formatDateOnly(student.startDate)}</td><td className="px-4 py-4"><StudentStatus student={student} /></td><td className="px-5 py-4 text-right"><Link to={`/students/${student.id}`} className="cursor-pointer font-semibold text-sky-700 hover:text-sky-900">Abrir</Link></td></tr>)}</tbody></table></div>;
+  const navigate = useNavigate();
+  return <div className="hidden overflow-x-auto md:block"><table className="w-full min-w-[560px] text-left text-sm"><thead className="border-b border-sky-100 bg-sky-50/60 text-xs font-semibold text-slate-600"><tr><th scope="col" className="px-5 py-3">Aluno</th><th scope="col" className="px-4 py-3">Modalidade</th><th scope="col" className="px-4 py-3">Nascimento</th><th scope="col" className="px-5 py-3">Início</th></tr></thead><tbody className="divide-y divide-sky-100">{students.map((student) => <tr key={student.id} role="link" tabIndex={0} aria-label={`Abrir cadastro de ${student.name}`} className="group/student-row cursor-pointer transition-colors duration-200 hover:bg-sky-50/60 focus-visible:bg-sky-50" onClick={() => navigate(`/students/${student.id}`)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); navigate(`/students/${student.id}`); } }}><td className="px-5 py-4"><div className="flex min-w-44 items-center gap-3"><span className="transition-transform duration-200 group-hover/student-row:scale-105"><StudentAvatar name={student.name} /></span><span className="min-w-0"><span className="block truncate font-semibold text-slate-950">{student.name}</span><span className="block truncate text-xs text-slate-600">{student.email || student.phone || "Cadastro básico"}</span></span></div></td><td className="px-4 py-4"><AttendanceBadge mode={student.attendanceMode} /></td><td className="px-4 py-4 text-slate-700">{formatDateOnly(student.birthDate)}</td><td className="px-5 py-4 text-slate-700">{formatDateOnly(student.startDate)}</td></tr>)}</tbody></table></div>;
+}
+
+function AttendanceBadge({ mode, className }: { mode: Student["attendanceMode"]; className?: string }) {
+  return <Badge variant={mode ? "secondary" : "outline"} className={cn("w-fit", mode ? "bg-sky-50 text-sky-700" : "text-slate-500", className)}>{mode === "online" ? "Online" : mode === "presencial" ? "Presencial" : "Modalidade não informada"}</Badge>;
 }
 
 function LoadingState() {
@@ -91,5 +62,5 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 }
 
 function EmptyState({ hasFilters, onCreate }: { hasFilters: boolean; onCreate: () => void }) {
-  return <div className="flex flex-col items-center px-5 py-14 text-center"><span className="grid size-12 place-items-center rounded-2xl bg-sky-50 text-sky-600"><CheckCircle2 className="size-5" /></span><p className="mt-4 font-semibold text-slate-950">{hasFilters ? "Nenhum cadastro corresponde aos filtros." : "Sua base ainda está vazia."}</p><p className="mt-1 max-w-sm text-sm leading-6 text-slate-600">{hasFilters ? "Tente buscar por outro nome ou selecionar outro status." : "Cadastre seu primeiro aluno para começar a acompanhar sua base."}</p>{!hasFilters && <Button type="button" variant="secondary" className="mt-5" onClick={onCreate}><Plus className="size-4" />Cadastrar primeiro aluno</Button>}</div>;
+  return <div className="flex flex-col items-center px-5 py-14 text-center"><span className="grid size-12 place-items-center rounded-2xl bg-sky-50 text-sky-600"><CheckCircle2 className="size-5" /></span><p className="mt-4 font-semibold text-slate-950">{hasFilters ? "Nenhum cadastro corresponde à busca." : "Sua base ainda está vazia."}</p><p className="mt-1 max-w-sm text-sm leading-6 text-slate-600">{hasFilters ? "Tente buscar por outro nome ou contato." : "Cadastre seu primeiro aluno para começar a acompanhar sua base."}</p>{!hasFilters && <Button type="button" variant="secondary" className="mt-5" onClick={onCreate}><Plus className="size-4" />Cadastrar primeiro aluno</Button>}</div>;
 }

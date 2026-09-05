@@ -1,14 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save } from "lucide-react";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
 import { Drawer } from "../../components/ui/drawer";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Select } from "../../components/ui/select";
+import { DatePicker } from "../../components/ui/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { Textarea } from "../../components/ui/textarea";
 import { useCreateStudent, useUpdateStudent } from "../../hooks/use-students";
 import { type Student } from "../../types/api";
@@ -18,7 +19,7 @@ const studentSchema = z.object({
   attendanceMode: z.string().min(1, "Escolha a modalidade.").refine((value) => value === "online" || value === "presencial", "Escolha uma modalidade válida."),
   birthDate: z.string().min(1, "Informe a data de nascimento."),
   startDate: z.string().min(1, "Informe a data de início."),
-  pathology: z.string().max(120, "Use no máximo 120 caracteres."),
+  phone: z.string().max(40, "Use no máximo 40 caracteres."),
   observations: z.string().max(1000, "Use no máximo 1.000 caracteres.")
 });
 
@@ -38,6 +39,7 @@ export function StudentForm({ student, drawer = false, open = true, onClose }: S
   const mutation = student ? updateStudent : createStudent;
   const formId = drawer ? "student-form-drawer" : "student-form-page";
   const form = useForm<StudentFormValues>({ resolver: zodResolver(studentSchema), defaultValues: getDefaultValues(student) });
+  const phoneField = form.register("phone");
 
   useEffect(() => {
     form.reset(getDefaultValues(student));
@@ -49,10 +51,9 @@ export function StudentForm({ student, drawer = false, open = true, onClose }: S
       attendanceMode: values.attendanceMode as "online" | "presencial",
       birthDate: values.birthDate,
       startDate: values.startDate,
-      pathology: values.pathology || null,
+      phone: values.phone || null,
       observations: values.observations || null,
       email: student?.email || null,
-      phone: student?.phone || null
     });
     if (drawer) {
       form.reset(getDefaultValues(undefined));
@@ -64,9 +65,9 @@ export function StudentForm({ student, drawer = false, open = true, onClose }: S
 
   const formFields = <>
     <div className="space-y-2"><Label htmlFor="name">Nome completo <span className="text-red-600">*</span></Label><Input id="name" autoFocus={!drawer} {...form.register("name")} aria-invalid={Boolean(form.formState.errors.name)} placeholder="Digite o nome completo" />{form.formState.errors.name && <FieldError>{form.formState.errors.name.message}</FieldError>}</div>
-    <div className="space-y-2"><Label htmlFor="attendanceMode">Modalidade <span className="text-red-600">*</span></Label><Select id="attendanceMode" {...form.register("attendanceMode")} aria-invalid={Boolean(form.formState.errors.attendanceMode)}><option value="">Selecione uma modalidade</option><option value="online">Online</option><option value="presencial">Presencial</option></Select>{form.formState.errors.attendanceMode && <FieldError>{form.formState.errors.attendanceMode.message}</FieldError>}</div>
-    <div className="grid gap-5 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="birthDate">Data de nascimento <span className="text-red-600">*</span></Label><Input id="birthDate" type="date" {...form.register("birthDate")} aria-invalid={Boolean(form.formState.errors.birthDate)} />{form.formState.errors.birthDate && <FieldError>{form.formState.errors.birthDate.message}</FieldError>}</div><div className="space-y-2"><Label htmlFor="startDate">Data de início <span className="text-red-600">*</span></Label><Input id="startDate" type="date" {...form.register("startDate")} aria-invalid={Boolean(form.formState.errors.startDate)} />{form.formState.errors.startDate && <FieldError>{form.formState.errors.startDate.message}</FieldError>}</div></div>
-    <div className="space-y-2"><Label htmlFor="pathology">Patologia <span className="font-normal text-muted-foreground">(opcional)</span></Label><Select id="pathology" {...form.register("pathology")}><option value="">Não informado</option><option value="Ortopédica">Ortopédica</option><option value="Neurológica">Neurológica</option><option value="Cardiorrespiratória">Cardiorrespiratória</option><option value="Outra">Outra</option></Select>{form.formState.errors.pathology && <FieldError>{form.formState.errors.pathology.message}</FieldError>}</div>
+    <div className="space-y-2"><Label htmlFor="attendanceMode">Modalidade <span className="text-red-600">*</span></Label><Controller control={form.control} name="attendanceMode" render={({ field }) => <Select value={field.value} onValueChange={field.onChange}><SelectTrigger id="attendanceMode" ref={field.ref} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.attendanceMode)}><SelectValue placeholder="Selecione uma modalidade" /></SelectTrigger><SelectContent><SelectItem value="online">Online</SelectItem><SelectItem value="presencial">Presencial</SelectItem></SelectContent></Select>} />{form.formState.errors.attendanceMode && <FieldError>{form.formState.errors.attendanceMode.message}</FieldError>}</div>
+    <div className="grid gap-5 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="birthDate">Data de nascimento <span className="text-red-600">*</span></Label><Controller control={form.control} name="birthDate" render={({ field }) => <DatePicker id="birthDate" name={field.name} ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.birthDate)} />} />{form.formState.errors.birthDate && <FieldError>{form.formState.errors.birthDate.message}</FieldError>}</div><div className="space-y-2"><Label htmlFor="startDate">Data de início <span className="text-red-600">*</span></Label><Controller control={form.control} name="startDate" render={({ field }) => <DatePicker id="startDate" name={field.name} ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.startDate)} />} />{form.formState.errors.startDate && <FieldError>{form.formState.errors.startDate.message}</FieldError>}</div></div>
+    <div className="space-y-2"><Label htmlFor="phone">Número de telefone <span className="font-normal text-muted-foreground">(opcional)</span></Label><Input id="phone" type="tel" inputMode="numeric" autoComplete="tel" maxLength={15} {...phoneField} onChange={(event) => { event.target.value = formatPhone(event.target.value); void phoneField.onChange(event); }} aria-invalid={Boolean(form.formState.errors.phone)} placeholder="(00) 00000-0000" />{form.formState.errors.phone && <FieldError>{form.formState.errors.phone.message}</FieldError>}</div>
     <div className="space-y-2"><Label htmlFor="observations">Observações <span className="font-normal text-muted-foreground">(opcional)</span></Label><Textarea id="observations" {...form.register("observations")} aria-invalid={Boolean(form.formState.errors.observations)} placeholder="Anotações importantes sobre o aluno" />{form.formState.errors.observations && <FieldError>{form.formState.errors.observations.message}</FieldError>}</div>
     {mutation.isError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm leading-5 text-red-800">Não foi possível salvar o cadastro. Revise os dados e tente novamente.</p>}
   </>;
@@ -79,7 +80,17 @@ export function StudentForm({ student, drawer = false, open = true, onClose }: S
 }
 
 function getDefaultValues(student?: Student): StudentFormValues {
-  return { name: student?.name || "", attendanceMode: student?.attendanceMode || "", birthDate: student?.birthDate || "", startDate: student?.startDate || "", pathology: student?.pathology || "", observations: student?.observations || "" };
+  return { name: student?.name || "", attendanceMode: student?.attendanceMode || "", birthDate: student?.birthDate || "", startDate: student?.startDate || "", phone: formatPhone(student?.phone || ""), observations: student?.observations || "" };
+}
+
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (!digits) return "";
+  if (digits.length < 2) return `(${digits}`;
+  if (digits.length === 2) return `(${digits}) `;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
 function FieldError({ children }: { children?: string }) {
