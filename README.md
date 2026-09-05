@@ -46,9 +46,11 @@ O repositório publica automaticamente o frontend no GitHub Pages e a API no Clo
    - `VITE_FIREBASE_PROJECT_ID`
    - `VITE_FIREBASE_APP_ID`
    - `VITE_FIREBASE_MESSAGING_SENDER_ID`
-3. Adicione `visumi.github.io` aos domínios autorizados do Firebase Authentication.
+3. Em `public/CNAME`, mantenha o domínio customizado `jdeniz.isumi.com.br`.
+4. No DNS da Cloudflare, crie um registro `CNAME` para `jdeniz` apontando para `visumi.github.io`. Mantenha o proxy desligado durante a emissão inicial do certificado do GitHub Pages.
+5. Adicione `jdeniz.isumi.com.br` aos domínios autorizados do Firebase Authentication.
 
-O site ficará disponível em `https://visumi.github.io/jdeniz/`.
+O site ficará disponível em `https://jdeniz.isumi.com.br`.
 
 ### Cloudflare Workers
 

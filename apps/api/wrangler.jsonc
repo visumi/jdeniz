@@ -6,7 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "vars": {
-    "ALLOWED_ORIGIN": "https://visumi.github.io"
+    "ALLOWED_ORIGIN": "https://jdeniz.isumi.com.br"
   },
   "secrets": {
     "required": [
