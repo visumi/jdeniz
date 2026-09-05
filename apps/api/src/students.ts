@@ -114,6 +114,11 @@ export async function updateStudent(db: Client, user: AuthUser, id: string, payl
   return getStudent(db, user, id);
 }
 
+export async function deleteStudent(db: Client, user: AuthUser, id: string): Promise<void> {
+  const result = await db.execute({ sql: "DELETE FROM students WHERE id = ? AND owner_user_id = ?", args: [id, user.uid] });
+  if (result.rowsAffected === 0) throw new HttpError(404, "student_not_found");
+}
+
 function readDbInteger(row: DbRow, key: string): number {
   const value = row[key];
   if (typeof value !== "number" || !Number.isInteger(value)) throw new HttpError(500, `invalid_db_${key}`);

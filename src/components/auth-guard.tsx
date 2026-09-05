@@ -14,5 +14,5 @@ export function AuthGuard() {
 }
 
 export function FullPageMessage({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
-  return <main className="auth-message-screen grid min-h-dvh place-items-center bg-background px-5 py-10 text-center"><div className="w-full max-w-sm space-y-7"><BrandLogo showName={false} className="mx-auto" /><div className="space-y-2"><h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>{description && <p className="text-sm leading-6 text-muted-foreground">{description}</p>}</div>{action}</div></main>;
+  return <main className="auth-message-screen grid min-h-dvh place-items-center bg-background px-5 py-10 text-center"><div className="w-full max-w-sm space-y-7"><BrandLogo showName={false} className="mx-auto justify-center" /><div className="space-y-2"><h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>{description && <p className="text-sm leading-6 text-muted-foreground">{description}</p>}</div>{action}</div></main>;
 }

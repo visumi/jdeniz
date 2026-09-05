@@ -11,6 +11,8 @@
 - Antes de concluir qualquer implementação, verificar a tela no mobile e confirmar que as resoluções maiores são apenas uma evolução de layout.
 - Animações de menus, popups e controles devem ser clean: não usar pulo, bounce, escala agressiva ou deslocamento do elemento. Preferir transições sutis de cor, opacidade, ring ou sombra.
 - Todo item que surge ou desaparece na interface deve usar uma transição sutil de entrada/saída, preferencialmente opacidade e visibilidade em 150–200ms. Quando a saída precisar ser animada, manter o elemento montado durante a transição e controlar sua interatividade; nunca fazer o item simplesmente aparecer ou sumir.
+- Todo modal ou drawer deve usar um drawer inferior em mobile e tablet; em desktop (`lg` ou maior), deve usar um modal centralizado, mantendo o mesmo conteúdo, fluxo e prioridade.
+- Páginas internas com hierarquia de navegação devem usar o componente Breadcrumb no padrão shadcn/ui, com o item atual identificado como página e sem substituir o breadcrumb por um botão de voltar.
 
 ## UI
 

@@ -40,3 +40,14 @@ export function useUpdateStudent(id: string) {
     }
   });
 }
+
+export function useDeleteStudent(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiRequest<void>(`/students/${encodeURIComponent(id)}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ["student", id] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+    }
+  });
+}

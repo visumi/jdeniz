@@ -11,7 +11,7 @@ import {
   type AccessGrantPatchInput
 } from "./access";
 import { createDatabaseClient, type Env, HttpError } from "./shared";
-import { createStudent, getStudent, listStudents, updateStudent, type StudentInput } from "./students";
+import { createStudent, deleteStudent, getStudent, listStudents, updateStudent, type StudentInput } from "./students";
 
 const jsonHeaders = { "Content-Type": "application/json; charset=utf-8" };
 
@@ -47,6 +47,10 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
       const studentId = decodeURIComponent(studentMatch[1]);
       if (request.method === "GET") return json(await getStudent(db, user, studentId), 200, corsHeaders);
       if (request.method === "PATCH") return json(await updateStudent(db, user, studentId, await readJson<StudentInput>(request)), 200, corsHeaders);
+      if (request.method === "DELETE") {
+        await deleteStudent(db, user, studentId);
+        return new Response(null, { status: 204, headers: corsHeaders });
+      }
     }
 
     if (url.pathname === "/admin/access-users") {
@@ -82,7 +86,7 @@ function buildCorsHeaders(request: Request, env: Env): Headers {
     headers.set("Access-Control-Allow-Origin", origin);
     headers.set("Vary", "Origin");
   }
-  headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS");
+  headers.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Authorization,Content-Type");
   headers.set("Access-Control-Max-Age", "86400");
   return headers;

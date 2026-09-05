@@ -89,6 +89,14 @@ O sistema usa camadas tonais e bordas suaves para criar estrutura. Sombras são 
 
 Navegação inferior full-width no mobile, com respiro lateral e inferior, contendo duas ações centrais apenas por ícone — Início e Alunos — dentro de uma moldura pill. Cada item ocupa toda a sua área como uma pill segmentada; o item ativo usa azul e indicador textual/visual, sem depender apenas de cor. Em telas com scroll, o dock reaparece durante a interação vertical e desaparece suavemente após 1,8s sem movimento; em telas sem scroll, permanece visível.
 
+### Breadcrumbs
+
+Páginas internas com hierarquia devem usar o componente Breadcrumb no padrão shadcn/ui. O caminho deve mostrar a coleção anterior e a página atual, que permanece como texto sem link.
+
+### Dialogs and drawers
+
+Fluxos temporários usam drawer inferior em mobile e tablet. Em desktop (`lg` ou maior), o mesmo fluxo aparece em um modal centralizado. A mudança é somente estrutural: conteúdo, ações e prioridade permanecem equivalentes entre os breakpoints.
+
 ### Student search
 
 A busca global de alunos usa um combobox compacto e mobile-first no cabeçalho, em uma única linha entre a marca e o menu da conta, com campo pill. Ao primeiro caractere, a consulta aguarda uma pausa curta antes de buscar, reutiliza cache e exibe estados explícitos de carregamento, erro, vazio e resultados. Resultados são links em linhas-card discretas, com nome, dado secundário e avatar SVG determinístico do Boring Avatars; a animação limita-se a opacidade, cor, borda e escala mínima no hover.

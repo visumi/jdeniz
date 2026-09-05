@@ -94,8 +94,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .ui-drawer[data-state="closed"] .ui-drawer-overlay { opacity: 0; }
 .ui-drawer-panel { transform: translateY(0); transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1); }
 .ui-drawer[data-state="closed"] .ui-drawer-panel { transform: translateY(100%); }
-@media (min-width: 768px) {
-  .ui-drawer[data-state="closed"] .ui-drawer-panel { transform: translateX(100%); }
+@media (min-width: 1024px) {
+  .ui-drawer-panel { transition: opacity 180ms ease-out; }
+  .ui-drawer[data-state="closed"] .ui-drawer-panel { opacity: 0; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

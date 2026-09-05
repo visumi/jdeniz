@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "../../components/ui/button";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbList } from "../../components/ui/breadcrumb";
 import { Drawer } from "../../components/ui/drawer";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -37,7 +38,7 @@ export function StudentForm({ student, drawer = false, open = true, onClose }: S
   const createStudent = useCreateStudent();
   const updateStudent = useUpdateStudent(student?.id || "");
   const mutation = student ? updateStudent : createStudent;
-  const formId = drawer ? "student-form-drawer" : "student-form-page";
+  const formId = drawer ? student ? "student-form-drawer-edit" : "student-form-drawer" : "student-form-page";
   const form = useForm<StudentFormValues>({ resolver: zodResolver(studentSchema), defaultValues: getDefaultValues(student) });
   const phoneField = form.register("phone");
 
@@ -75,8 +76,8 @@ export function StudentForm({ student, drawer = false, open = true, onClose }: S
   const formActions = <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={drawer ? onClose : undefined} asChild={!drawer}>{drawer ? "Cancelar" : <Link to={student ? `/students/${student.id}` : "/students"}>Cancelar</Link>}</Button><Button type="submit" form={formId} className="bg-sky-600 hover:bg-sky-700" disabled={mutation.isPending}><Save className="size-4" />{mutation.isPending ? "Salvando…" : student ? "Salvar alterações" : "Salvar aluno"}</Button></div>;
   const formContent = <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>{formFields}{!drawer && <div className="border-t border-sky-100 pt-4">{formActions}</div>}</form>;
 
-  if (drawer) return <Drawer open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose?.(); }} title="Novo aluno" description="Cadastre os dados essenciais para acompanhar seus treinos e avaliações." footer={formActions}>{formContent}</Drawer>;
-  return <div className="mx-auto max-w-2xl space-y-6"><Button asChild variant="ghost" className="-ml-3"><Link to={student ? `/students/${student.id}` : "/students"}><ArrowLeft className="size-4" />Voltar</Link></Button><div><p className="text-sm font-semibold text-sky-700">{student ? "Editar cadastro" : "Novo cadastro"}</p><h1 className="mt-1 text-3xl font-bold tracking-tight">{student ? student.name : "Cadastrar aluno"}</h1><p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Registre o essencial agora. O perfil pode crescer junto com o acompanhamento.</p></div><div className="rounded-xl border border-sky-100 bg-white p-5 sm:p-6">{formContent}</div></div>;
+  if (drawer) return <Drawer open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose?.(); }} title={student ? "Editar aluno" : "Novo aluno"} description={student ? "Atualize os dados essenciais do aluno." : "Cadastre os dados essenciais para acompanhar seus treinos e avaliações."} footer={formActions}>{formContent}</Drawer>;
+  return <div className="mx-auto max-w-2xl space-y-6"><Breadcrumb><BreadcrumbList><BreadcrumbItem><BreadcrumbLink asChild><Link to="/students">Alunos</Link></BreadcrumbLink></BreadcrumbItem><BreadcrumbSeparator /><BreadcrumbItem><BreadcrumbPage>{student ? "Editar cadastro" : "Novo cadastro"}</BreadcrumbPage></BreadcrumbItem></BreadcrumbList></Breadcrumb><div><p className="text-sm font-semibold text-sky-700">{student ? "Editar cadastro" : "Novo cadastro"}</p><h1 className="mt-1 text-3xl font-bold tracking-tight">{student ? student.name : "Cadastrar aluno"}</h1><p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Registre o essencial agora. O perfil pode crescer junto com o acompanhamento.</p></div><div className="rounded-xl border border-sky-100 bg-white p-5 sm:p-6">{formContent}</div></div>;
 }
 
 function getDefaultValues(student?: Student): StudentFormValues {
