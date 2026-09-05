@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { resolveAccessDecision } from "../src/access";
+import { getOwnerEmails, resolveAccessDecision } from "../src/access";
 
-const env = { OWNER_EMAIL: "owner@example.com" };
+const env = { OWNER_EMAIL: "owner@example.com, second@example.com" };
+
+describe("owner emails", () => {
+  it("normaliza múltiplos owners separados por vírgula", () => {
+    expect(getOwnerEmails({ OWNER_EMAIL: " OWNER@example.com, second@example.com, owner@example.com " })).toEqual(["owner@example.com", "second@example.com"]);
+  });
+});
 
 describe("resolveAccessDecision", () => {
   it("autoriza o owner mesmo sem grant", () => {
     expect(resolveAccessDecision("OWNER@example.com", null, env)).toEqual({ allowed: true, role: "owner" });
+    expect(resolveAccessDecision("SECOND@example.com", null, env)).toEqual({ allowed: true, role: "owner" });
   });
 
   it("autoriza um membro ativo", () => {

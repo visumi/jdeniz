@@ -61,6 +61,6 @@ Em `Settings > Secrets and variables > Actions > Secrets`, cadastre:
 - `TURSO_URL`
 - `TURSO_AUTH_TOKEN`
 - `FIREBASE_PROJECT_ID`
-- `OWNER_EMAIL`
+- `OWNER_EMAIL` — informe os dois e-mails separados por vírgula, por exemplo `primeiro@email.com,segundo@email.com`
 
 O workflow sincroniza os quatro últimos segredos no Worker e publica a API em `https://jdeniz-api.isumi.com.br`.

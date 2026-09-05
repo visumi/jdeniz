@@ -92,8 +92,14 @@ export function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export function getOwnerEmails(env: Pick<Env, "OWNER_EMAIL">): string[] {
+  const emails = [...new Set(requiredEnv(env.OWNER_EMAIL, "OWNER_EMAIL").split(",").map(normalizeEmail).filter(Boolean))];
+  if (emails.length === 0) throw new HttpError(500, "OWNER_EMAIL_not_configured");
+  return emails;
+}
+
 export function isOwnerEmail(email: string, env: Pick<Env, "OWNER_EMAIL">): boolean {
-  return normalizeEmail(email) === normalizeEmail(requiredEnv(env.OWNER_EMAIL, "OWNER_EMAIL"));
+  return getOwnerEmails(env).includes(normalizeEmail(email));
 }
 
 export function resolveAccessDecision(
@@ -146,14 +152,16 @@ export function requireOwner(user: AuthUser): void {
 }
 
 export async function ensureOwnerAccessGrant(db: Client, env: Env): Promise<void> {
-  await db.execute({
-    sql: `
-      INSERT INTO access_grants (email, role, active, created_at, updated_at)
-      VALUES (?, 'owner', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      ON CONFLICT(email) DO UPDATE SET role = 'owner', active = 1, updated_at = CURRENT_TIMESTAMP
-    `,
-    args: [normalizeEmail(requiredEnv(env.OWNER_EMAIL, "OWNER_EMAIL"))]
-  });
+  for (const email of getOwnerEmails(env)) {
+    await db.execute({
+      sql: `
+        INSERT INTO access_grants (email, role, active, created_at, updated_at)
+        VALUES (?, 'owner', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT(email) DO UPDATE SET role = 'owner', active = 1, updated_at = CURRENT_TIMESTAMP
+      `,
+      args: [email]
+    });
+  }
 }
 
 export async function listAccessGrants(db: Client, env: Env) {
