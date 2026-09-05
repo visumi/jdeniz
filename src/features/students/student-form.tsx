@@ -17,7 +17,7 @@ import { type Student } from "../../types/api";
 
 const studentSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome do aluno.").max(120, "Use no máximo 120 caracteres."),
-  attendanceMode: z.string().min(1, "Escolha a modalidade.").refine((value) => value === "online" || value === "presencial", "Escolha uma modalidade válida."),
+  attendanceMode: z.string().min(1, "Escolha a modalidade.").refine((value): boolean => value === "online" || value === "presencial", "Escolha uma modalidade válida."),
   birthDate: z.string().min(1, "Informe a data de nascimento."),
   startDate: z.string().min(1, "Informe a data de início."),
   phone: z.string().max(40, "Use no máximo 40 caracteres."),

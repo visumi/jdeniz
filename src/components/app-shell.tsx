@@ -31,7 +31,7 @@ export function AppShell() {
 function MobileNavigation() {
   const [isVisible, setIsVisible] = useState(true);
   const canScrollRef = useRef(false);
-  const hideTimerRef = useRef<number>();
+  const hideTimerRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const scheduleHide = () => {

@@ -25,6 +25,10 @@ export interface StudentInput {
   name: string;
   email?: string | null;
   phone?: string | null;
+  attendanceMode?: Student["attendanceMode"];
+  birthDate?: string | null;
+  startDate?: string | null;
+  observations?: string | null;
 }
 
 export interface AccessGrant {
