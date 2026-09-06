@@ -23,7 +23,7 @@ const objectiveLabels: Record<WorkoutObjective, string> = {
 
 const workoutSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome do treino.").max(120, "Use no máximo 120 caracteres."),
-  objective: z.string().refine((value): value is WorkoutObjective => WORKOUT_OBJECTIVES.includes(value as WorkoutObjective), "Escolha um objetivo."),
+  objective: z.string().refine((value) => WORKOUT_OBJECTIVES.includes(value as WorkoutObjective), "Escolha um objetivo."),
   frequencyPerWeek: z.string().regex(/^[1-7]$/, "Escolha uma frequência entre 1 e 7 vezes."),
   startDate: z.string().min(1, "Informe a data de início."),
   endDate: z.string().min(1, "Informe a data de fim."),
@@ -48,6 +48,8 @@ export function WorkoutForm({ studentId, open, onClose }: { studentId: string; o
   }, [form, open, resetCreateWorkout]);
 
   async function onSubmit(values: WorkoutFormValues) {
+    if (!isWorkoutObjective(values.objective)) return;
+
     await createWorkout.mutateAsync({
       name: values.name,
       objective: values.objective,
@@ -62,7 +64,7 @@ export function WorkoutForm({ studentId, open, onClose }: { studentId: string; o
   const formContent = <form id="workout-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
     <div className="space-y-2"><Label htmlFor="workout-name">Nome do treino <span className="text-red-600">*</span></Label><Input id="workout-name" {...form.register("name")} aria-invalid={Boolean(form.formState.errors.name)} placeholder="Ex.: Treino de adaptação" />{form.formState.errors.name && <FieldError>{form.formState.errors.name.message}</FieldError>}</div>
     <div className="space-y-2"><Label htmlFor="workout-objective">Objetivo <span className="text-red-600">*</span></Label><Controller control={form.control} name="objective" render={({ field }) => <Select value={field.value} onValueChange={field.onChange}><SelectTrigger id="workout-objective" ref={field.ref} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.objective)}><SelectValue placeholder="Selecione um objetivo" /></SelectTrigger><SelectContent>{WORKOUT_OBJECTIVES.map((objective) => <SelectItem key={objective} value={objective}>{objectiveLabels[objective]}</SelectItem>)}</SelectContent></Select>} />{form.formState.errors.objective && <FieldError>{form.formState.errors.objective.message}</FieldError>}</div>
-    <div className="space-y-2"><Label htmlFor="workout-frequency">Frequência <span className="text-red-600">*</span></Label><Controller control={form.control} name="frequencyPerWeek" render={({ field }) => <Select value={field.value} onValueChange={field.onChange}><SelectTrigger id="workout-frequency" ref={field.ref} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.frequencyPerWeek)}><SelectValue placeholder="Quantas vezes por semana?" /></SelectTrigger><SelectContent>{Array.from({ length: 7 }, (_, index) => String(index + 1)).map((value) => <SelectItem key={value} value={value}>{value} {value === "1" ? "vez por semana" : "vezes por semana"}</SelectItem>)}</SelectContent></Select>} />{form.formState.errors.frequencyPerWeek && <FieldError>{form.formState.errors.frequencyPerWeek.message}</FieldError>}</div>
+    <div className="space-y-2"><Label htmlFor="workout-frequency">Frequência <span className="text-red-600">*</span></Label><Controller control={form.control} name="frequencyPerWeek" render={({ field }) => <Select value={field.value} onValueChange={field.onChange}><SelectTrigger id="workout-frequency" ref={field.ref} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.frequencyPerWeek)}><SelectValue placeholder="Quantas vezes por semana?" /></SelectTrigger><SelectContent>{Array.from({ length: 7 }, (_, index) => String(index + 1)).map((value) => <SelectItem key={value} value={value}>{`${value} ${value === "1" ? "vez por semana" : "vezes por semana"}`}</SelectItem>)}</SelectContent></Select>} />{form.formState.errors.frequencyPerWeek && <FieldError>{form.formState.errors.frequencyPerWeek.message}</FieldError>}</div>
     <div className="grid gap-5 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="workout-start-date">Data de início <span className="text-red-600">*</span></Label><Controller control={form.control} name="startDate" render={({ field }) => <DatePicker id="workout-start-date" name={field.name} ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.startDate)} />} />{form.formState.errors.startDate && <FieldError>{form.formState.errors.startDate.message}</FieldError>}</div><div className="space-y-2"><Label htmlFor="workout-end-date">Data de fim <span className="text-red-600">*</span></Label><Controller control={form.control} name="endDate" render={({ field }) => <DatePicker id="workout-end-date" name={field.name} ref={field.ref} value={field.value} onChange={field.onChange} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.endDate)} />} />{form.formState.errors.endDate && <FieldError>{form.formState.errors.endDate.message}</FieldError>}</div></div>
     <div className="space-y-2"><Label htmlFor="workout-observations">Observações <span className="font-normal text-muted-foreground">(opcional)</span></Label><Textarea id="workout-observations" {...form.register("observations")} aria-invalid={Boolean(form.formState.errors.observations)} placeholder="Anotações importantes sobre este treino" />{form.formState.errors.observations && <FieldError>{form.formState.errors.observations.message}</FieldError>}</div>
     {createWorkout.isError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm leading-5 text-red-800">Não foi possível salvar o treino. Revise os dados e tente novamente.</p>}
@@ -75,6 +77,10 @@ export function WorkoutForm({ studentId, open, onClose }: { studentId: string; o
 
 function getDefaultValues(): WorkoutFormValues {
   return { name: "", objective: "", frequencyPerWeek: "", startDate: "", endDate: "", observations: "" };
+}
+
+function isWorkoutObjective(value: string): value is WorkoutObjective {
+  return WORKOUT_OBJECTIVES.includes(value as WorkoutObjective);
 }
 
 function FieldError({ children }: { children?: string }) {

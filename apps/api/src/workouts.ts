@@ -44,7 +44,8 @@ export function validateWorkoutInput(payload: WorkoutInput): ValidatedWorkoutInp
   if (!objective) throw new HttpError(400, "objective_required");
   if (!isWorkoutObjective(objective)) throw new HttpError(400, "invalid_objective");
 
-  if (!Number.isInteger(payload.frequencyPerWeek) || payload.frequencyPerWeek < 1 || payload.frequencyPerWeek > 7) {
+  const frequencyPerWeek = payload.frequencyPerWeek;
+  if (typeof frequencyPerWeek !== "number" || !Number.isInteger(frequencyPerWeek) || frequencyPerWeek < 1 || frequencyPerWeek > 7) {
     throw new HttpError(400, "invalid_frequency_per_week");
   }
 
@@ -55,7 +56,7 @@ export function validateWorkoutInput(payload: WorkoutInput): ValidatedWorkoutInp
   const observations = normalizeOptional(payload.observations);
   if (observations && observations.length > 1000) throw new HttpError(400, "observations_too_long");
 
-  return { name, objective, frequencyPerWeek: payload.frequencyPerWeek, startDate, endDate, observations };
+  return { name, objective, frequencyPerWeek, startDate, endDate, observations };
 }
 
 export function isWorkoutObjective(value: string): value is WorkoutObjective {
