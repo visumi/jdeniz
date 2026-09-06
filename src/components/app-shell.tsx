@@ -20,10 +20,10 @@ export function AppShell() {
   const { user, signOutUser } = useAuth();
   return <div className="min-h-dvh bg-background">
     <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col border-r border-border/80 bg-white lg:flex">
-      <div className="flex h-16 items-center px-5"><BrandLogo showName={false} className="px-1" /></div>
+      <div className="flex h-16 items-center px-5"><BrandLogo className="min-w-0 px-1" /></div>
       <nav aria-label="Navegação principal" className="flex-1 space-y-1 px-3 py-6">{navigation.map((item) => <NavigationLink key={item.to} {...item} />)}</nav>
     </aside>
-    <div className="lg:pl-64"><header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border/80 bg-background px-5 lg:px-10"><div className="shrink-0 lg:hidden"><BrandLogo showName={false} /></div><div className="min-w-0 flex-1 lg:mx-auto lg:max-w-md"><StudentSearch /></div><div className="flex shrink-0 items-center gap-3"><ProfileMenu displayName={user?.displayName || "Professor"} photoURL={user?.photoURL} signOutUser={signOutUser} /></div></header><main className="mx-auto max-w-6xl px-5 pb-28 pt-7 lg:px-10 lg:pb-10 lg:pt-10"><Outlet /></main></div>
+    <div className="lg:pl-64"><header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border/80 bg-background px-4 sm:gap-4 sm:px-5 lg:px-10"><div className="shrink-0 lg:hidden"><BrandLogo showName={false} /></div><div className="min-w-0 flex-1 lg:mx-auto lg:max-w-md"><StudentSearch /></div><div className="flex shrink-0 items-center gap-3"><ProfileMenu displayName={user?.displayName || "Professor"} photoURL={user?.photoURL} signOutUser={signOutUser} /></div></header><main className="mx-auto max-w-6xl px-5 pb-28 pt-7 lg:px-10 lg:pb-10 lg:pt-10"><Outlet /></main></div>
     <MobileNavigation />
   </div>;
 }

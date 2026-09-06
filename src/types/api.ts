@@ -38,3 +38,31 @@ export interface AccessGrant {
   createdAt: string;
   updatedAt: string;
 }
+
+export const WORKOUT_OBJECTIVES = ["hipertrofia", "emagrecimento", "saude_longevidade", "performance", "lesao"] as const;
+export type WorkoutObjective = typeof WORKOUT_OBJECTIVES[number];
+export type WorkoutDeadlineStatus = "on_track" | "expiring_soon" | "expired";
+
+export interface Workout {
+  id: string;
+  studentId: string;
+  name: string;
+  objective: WorkoutObjective;
+  frequencyPerWeek: number;
+  startDate: string;
+  endDate: string;
+  observations: string | null;
+  active: boolean;
+  deadlineStatus: WorkoutDeadlineStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkoutInput {
+  name: string;
+  objective: WorkoutObjective;
+  frequencyPerWeek: number;
+  startDate: string;
+  endDate: string;
+  observations?: string | null;
+}

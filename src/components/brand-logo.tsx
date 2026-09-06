@@ -3,13 +3,14 @@ import { cn } from "../lib/utils";
 type BrandLogoProps = {
   showName?: boolean;
   name?: string;
+  subtitle?: string;
   tone?: "light" | "dark";
   className?: string;
   markClassName?: string;
 };
 
-export function BrandLogo({ showName = true, name = "João Deniz", tone = "light", className, markClassName }: BrandLogoProps) {
-  return <div className={cn("brand-logo group flex items-center gap-3", className)} aria-label={name}><BrandMark className={markClassName} />{showName && <span className={cn("brand-logo-wordmark text-lg font-bold tracking-[-0.02em]", tone === "dark" ? "text-white" : "text-slate-950")}>{name}</span>}</div>;
+export function BrandLogo({ showName = true, name = "JDeniz", subtitle = "Gestão de alunos", tone = "light", className, markClassName }: BrandLogoProps) {
+  return <div className={cn("brand-logo group flex items-center gap-2.5", className)} aria-label={`${name} — ${subtitle}`}><BrandMark className={markClassName} />{showName && <span className="brand-logo-copy min-w-0"><span className={cn("brand-logo-wordmark block truncate text-lg font-bold leading-none tracking-[-0.02em]", tone === "dark" ? "text-white" : "text-slate-950")}>{name}</span><span className={cn("brand-logo-tagline mt-1 block truncate text-[0.6875rem] font-medium leading-none", tone === "dark" ? "text-slate-300" : "text-slate-500")}>{subtitle}</span></span>}</div>;
 }
 
 function BrandMark({ className }: { className?: string }) {

@@ -12,6 +12,7 @@ import {
 } from "./access";
 import { createDatabaseClient, type Env, HttpError } from "./shared";
 import { createStudent, deleteStudent, getStudent, listStudents, updateStudent, type StudentInput } from "./students";
+import { createWorkout, listWorkouts, type WorkoutInput } from "./workouts";
 
 const jsonHeaders = { "Content-Type": "application/json; charset=utf-8" };
 
@@ -40,6 +41,13 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
     if (url.pathname === "/students") {
       if (request.method === "GET") return json(await listStudents(db, user, url.searchParams.get("search") || ""), 200, corsHeaders);
       if (request.method === "POST") return json(await createStudent(db, user, await readJson<StudentInput>(request)), 201, corsHeaders);
+    }
+
+    const workoutsMatch = url.pathname.match(/^\/students\/([^/]+)\/workouts$/);
+    if (workoutsMatch) {
+      const studentId = decodeURIComponent(workoutsMatch[1]);
+      if (request.method === "GET") return json(await listWorkouts(db, user, studentId), 200, corsHeaders);
+      if (request.method === "POST") return json(await createWorkout(db, user, studentId, await readJson<WorkoutInput>(request)), 201, corsHeaders);
     }
 
     const studentMatch = url.pathname.match(/^\/students\/([^/]+)$/);

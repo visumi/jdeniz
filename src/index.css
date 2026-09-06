@@ -81,7 +81,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .brand-logo-j { transform-origin: 50% 50%; transition: transform 220ms ease-out; }
 .brand-logo-trail { stroke-dasharray: 1; stroke-dashoffset: 0; animation: brand-logo-trail 650ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both; }
 .brand-logo-spark { transform-box: fill-box; transform-origin: center; animation: brand-logo-spark 2.8s ease-in-out 800ms infinite; }
-.brand-logo-wordmark { animation: brand-logo-wordmark 420ms cubic-bezier(0.22, 1, 0.36, 1) 380ms both; }
+.brand-logo-copy { animation: brand-logo-wordmark 420ms cubic-bezier(0.22, 1, 0.36, 1) 380ms both; }
 .brand-logo:hover .brand-logo-surface { fill: oklch(0.5 0.134 242.749); }
 .brand-logo:hover .brand-logo-j { transform: translateY(-1px) rotate(-3deg); }
 .brand-logo:hover .brand-logo-trail { opacity: 1; }
@@ -100,7 +100,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .brand-logo-mark, .brand-logo-trail, .brand-logo-spark, .brand-logo-wordmark { animation: none; }
+  .brand-logo-mark, .brand-logo-trail, .brand-logo-spark, .brand-logo-copy { animation: none; }
   .brand-logo-surface, .brand-logo-j { transition: none; }
   .ui-drawer, .ui-drawer-overlay, .ui-drawer-panel { transition: none; }
 }
