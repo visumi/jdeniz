@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users } from "lucide-react";
+import { Dumbbell, LayoutDashboard, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/use-auth";
@@ -9,7 +9,8 @@ import { StudentSearch } from "./student-search";
 
 const navigation = [
   { to: "/dashboard", label: "Início", icon: LayoutDashboard },
-  { to: "/students", label: "Alunos", icon: Users }
+  { to: "/students", label: "Alunos", icon: Users },
+  { to: "/workouts", label: "Treinos", icon: Dumbbell }
 ];
 
 function NavigationLink({ to, label, icon: Icon, mobile = false }: { to: string; label: string; icon: typeof Users; mobile?: boolean }) {

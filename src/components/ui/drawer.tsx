@@ -16,6 +16,7 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLElement>(null);
+  const onOpenChangeRef = useRef(onOpenChange);
   const handleRef = useRef<HTMLButtonElement>(null);
   const dragStartRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
@@ -23,9 +24,13 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
+    onOpenChangeRef.current = onOpenChange;
+  }, [onOpenChange]);
+
+  useEffect(() => {
     if (!open) return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onOpenChange(false);
+      if (event.key === "Escape") onOpenChangeRef.current(false);
     };
     document.addEventListener("keydown", closeOnEscape);
     const previousOverflow = document.body.style.overflow;
@@ -36,7 +41,7 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
       document.removeEventListener("keydown", closeOnEscape);
       document.body.style.overflow = previousOverflow;
     };
-  }, [onOpenChange, open]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) setDragOffset(0);
@@ -63,7 +68,7 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
     dragStartRef.current = null;
     setIsDragging(false);
     event.currentTarget.releasePointerCapture(event.pointerId);
-    if (shouldClose) onOpenChange(false);
+    if (shouldClose) onOpenChangeRef.current(false);
     else setDragOffset(0);
   }
 
@@ -72,7 +77,7 @@ export function Drawer({ open, onOpenChange, title, description, children, foote
       suppressClickRef.current = false;
       return;
     }
-    onOpenChange(false);
+    onOpenChangeRef.current(false);
   }
 
   return createPortal(<div className="ui-drawer fixed inset-0 z-50" data-state={open ? "open" : "closed"} aria-hidden={!open}>

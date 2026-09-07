@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCreateWorkout } from "../../hooks/use-workouts";
@@ -12,6 +12,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { Textarea } from "../../components/ui/textarea";
+import { toast } from "sonner";
 
 const objectiveLabels: Record<WorkoutObjective, string> = {
   hipertrofia: "Hipertrofia",
@@ -35,7 +36,16 @@ const workoutSchema = z.object({
 
 type WorkoutFormValues = z.infer<typeof workoutSchema>;
 
-export function WorkoutForm({ studentId, open, onClose }: { studentId: string; open: boolean; onClose: () => void }) {
+type WorkoutFormProps = {
+  studentId: string;
+  open: boolean;
+  onClose: () => void;
+  embedded?: boolean;
+  formId?: string;
+  onPendingChange?: (pending: boolean) => void;
+};
+
+export function WorkoutForm({ studentId, open, onClose, embedded = false, formId = "workout-form", onPendingChange }: WorkoutFormProps) {
   const createWorkout = useCreateWorkout(studentId);
   const resetCreateWorkout = createWorkout.reset;
   const form = useForm<WorkoutFormValues>({ resolver: zodResolver(workoutSchema), defaultValues: getDefaultValues() });
@@ -46,6 +56,10 @@ export function WorkoutForm({ studentId, open, onClose }: { studentId: string; o
       resetCreateWorkout();
     }
   }, [form, open, resetCreateWorkout]);
+
+  useEffect(() => {
+    onPendingChange?.(createWorkout.isPending);
+  }, [createWorkout.isPending, onPendingChange]);
 
   async function onSubmit(values: WorkoutFormValues) {
     if (!isWorkoutObjective(values.objective)) return;
@@ -58,10 +72,11 @@ export function WorkoutForm({ studentId, open, onClose }: { studentId: string; o
       endDate: values.endDate,
       observations: values.observations || null
     });
+    toast.success("Treino criado com sucesso.");
     onClose();
   }
 
-  const formContent = <form id="workout-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
+  const formContent = <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
     <div className="space-y-2"><Label htmlFor="workout-name">Nome do treino <span className="text-red-600">*</span></Label><Input id="workout-name" {...form.register("name")} aria-invalid={Boolean(form.formState.errors.name)} placeholder="Ex.: Treino de adaptação" />{form.formState.errors.name && <FieldError>{form.formState.errors.name.message}</FieldError>}</div>
     <div className="space-y-2"><Label htmlFor="workout-objective">Objetivo <span className="text-red-600">*</span></Label><Controller control={form.control} name="objective" render={({ field }) => <Select value={field.value} onValueChange={field.onChange}><SelectTrigger id="workout-objective" ref={field.ref} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.objective)}><SelectValue placeholder="Selecione um objetivo" /></SelectTrigger><SelectContent>{WORKOUT_OBJECTIVES.map((objective) => <SelectItem key={objective} value={objective}>{objectiveLabels[objective]}</SelectItem>)}</SelectContent></Select>} />{form.formState.errors.objective && <FieldError>{form.formState.errors.objective.message}</FieldError>}</div>
     <div className="space-y-2"><Label htmlFor="workout-frequency">Frequência <span className="text-red-600">*</span></Label><Controller control={form.control} name="frequencyPerWeek" render={({ field }) => <Select value={field.value} onValueChange={field.onChange}><SelectTrigger id="workout-frequency" ref={field.ref} onBlur={field.onBlur} aria-invalid={Boolean(form.formState.errors.frequencyPerWeek)}><SelectValue placeholder="Quantas vezes por semana?" /></SelectTrigger><SelectContent>{Array.from({ length: 7 }, (_, index) => String(index + 1)).map((value) => <SelectItem key={value} value={value}>{`${value} ${value === "1" ? "vez por semana" : "vezes por semana"}`}</SelectItem>)}</SelectContent></Select>} />{form.formState.errors.frequencyPerWeek && <FieldError>{form.formState.errors.frequencyPerWeek.message}</FieldError>}</div>
@@ -70,8 +85,9 @@ export function WorkoutForm({ studentId, open, onClose }: { studentId: string; o
     {createWorkout.isError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm leading-5 text-red-800">Não foi possível salvar o treino. Revise os dados e tente novamente.</p>}
   </form>;
 
-  const formActions = <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} disabled={createWorkout.isPending}>Cancelar</Button><Button type="submit" form="workout-form" disabled={createWorkout.isPending}><Save className="size-4" />{createWorkout.isPending ? "Salvando…" : "Salvar treino"}</Button></div>;
+  const formActions: ReactNode = <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} disabled={createWorkout.isPending}>Cancelar</Button><Button type="submit" form={formId} disabled={createWorkout.isPending}><Save className="size-4" />{createWorkout.isPending ? "Salvando…" : "Salvar treino"}</Button></div>;
 
+  if (embedded) return formContent;
   return <Drawer open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }} title="Novo treino" description="Defina o próximo ciclo de acompanhamento do aluno." footer={formActions}>{formContent}</Drawer>;
 }
 

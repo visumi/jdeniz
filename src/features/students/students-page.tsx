@@ -34,8 +34,16 @@ export function StudentsPage() {
     }
   };
 
-  return <div className="space-y-7">
-    <Card className="overflow-hidden"><CardHeader className="gap-4 border-b border-sky-100 bg-white p-4 sm:p-5"><div className="flex items-center justify-between gap-3"><div><CardTitle>Cadastros de alunos</CardTitle><p className="mt-1 text-sm text-slate-600">{students.isPending ? "Carregando cadastros…" : `${filteredStudents.length} ${filteredStudents.length === 1 ? "cadastro encontrado" : "cadastros encontrados"}`}</p></div><Button type="button" size="sm" className="shrink-0" onClick={() => setDrawerOpen(true)}><Plus className="size-4" />Adicionar aluno</Button></div><div className="relative w-full"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-sky-600" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome ou contato" className="border-sky-200 bg-white pl-9" aria-label="Filtrar cadastros de alunos" /></div></CardHeader><CardContent className="p-0">{students.isPending ? <LoadingState /> : students.isError ? <ErrorState onRetry={() => void students.refetch()} /> : filteredStudents.length === 0 ? <EmptyState hasFilters={Boolean(search)} onCreate={() => setDrawerOpen(true)} /> : <><MobileStudentList students={filteredStudents} /><DesktopStudentTable students={filteredStudents} /></>}</CardContent></Card>
+  return <div className="space-y-6">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-950">Alunos</h1>
+        <p className="mt-1 text-sm leading-6 text-slate-600">Gerencie sua base de alunos em um só lugar.</p>
+      </div>
+      <Button type="button" className="w-full sm:w-auto" onClick={() => setDrawerOpen(true)}><Plus className="size-4" />Adicionar aluno</Button>
+    </div>
+
+    <Card className="overflow-hidden"><CardHeader className="gap-4 border-b border-sky-100 bg-white p-4 sm:p-5"><div><CardTitle>Cadastros de alunos</CardTitle><p className="mt-1 text-sm text-slate-600">{students.isPending ? "Carregando cadastros…" : `${filteredStudents.length} ${filteredStudents.length === 1 ? "cadastro encontrado" : "cadastros encontrados"}`}</p></div><div className="relative w-full"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-sky-600" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome ou contato" className="border-sky-200 bg-white pl-9" aria-label="Filtrar cadastros de alunos" /></div></CardHeader><CardContent className="p-0">{students.isPending ? <LoadingState /> : students.isError ? <ErrorState onRetry={() => void students.refetch()} /> : filteredStudents.length === 0 ? <EmptyState hasFilters={Boolean(search)} onCreate={() => setDrawerOpen(true)} /> : <><MobileStudentList students={filteredStudents} /><DesktopStudentTable students={filteredStudents} /></>}</CardContent></Card>
     <StudentForm drawer open={drawerOpen} onClose={closeDrawer} />
   </div>;
 }

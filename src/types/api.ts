@@ -42,6 +42,7 @@ export interface AccessGrant {
 export const WORKOUT_OBJECTIVES = ["hipertrofia", "emagrecimento", "saude_longevidade", "performance", "lesao"] as const;
 export type WorkoutObjective = typeof WORKOUT_OBJECTIVES[number];
 export type WorkoutDeadlineStatus = "on_track" | "expiring_soon" | "expired";
+export type WorkoutOverviewStatus = WorkoutDeadlineStatus | "no_workout";
 
 export interface Workout {
   id: string;
@@ -65,4 +66,18 @@ export interface WorkoutInput {
   startDate: string;
   endDate: string;
   observations?: string | null;
+}
+
+export interface WorkoutOverviewRow {
+  student: Pick<Student, "id" | "name" | "email" | "phone" | "attendanceMode">;
+  activeWorkout: Pick<Workout, "id" | "name" | "objective" | "frequencyPerWeek" | "startDate" | "endDate"> | null;
+  status: WorkoutOverviewStatus;
+}
+
+export interface WorkoutOverviewPage {
+  items: WorkoutOverviewRow[];
+  page: number;
+  pageSize: number;
+  total: number;
+  pageCount: number;
 }

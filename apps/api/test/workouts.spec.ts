@@ -1,7 +1,7 @@
 import { createClient, type Client } from "@libsql/client/node";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type AuthUser } from "../src/shared";
-import { createWorkout, getWorkoutDeadlineStatus, listWorkouts, validateWorkoutInput } from "../src/workouts";
+import { createWorkout, getWorkoutDeadlineStatus, listWorkoutOverview, listWorkouts, validateWorkoutInput } from "../src/workouts";
 
 const user: AuthUser = { uid: "user-1", email: "owner@example.com", name: "Professor", picture: null, allowed: true, role: "owner" };
 const otherUser: AuthUser = { ...user, uid: "user-2", email: "other@example.com" };
@@ -13,10 +13,12 @@ beforeEach(async () => {
   await db.executeMultiple(`
     PRAGMA foreign_keys = ON;
     DROP TABLE IF EXISTS workouts;
+    DROP TABLE IF EXISTS student_profiles;
     DROP TABLE IF EXISTS students;
     DROP TABLE IF EXISTS users;
     CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE);
-    CREATE TABLE students (id TEXT PRIMARY KEY, owner_user_id TEXT NOT NULL, name TEXT NOT NULL, FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE);
+    CREATE TABLE students (id TEXT PRIMARY KEY, owner_user_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT, phone TEXT, FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE);
+    CREATE TABLE student_profiles (student_id TEXT PRIMARY KEY, attendance_mode TEXT, birth_date TEXT, start_date TEXT, observations TEXT, FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE);
     CREATE TABLE workouts (
       id TEXT PRIMARY KEY,
       student_id TEXT NOT NULL,
@@ -92,5 +94,36 @@ describe("workout lifecycle", () => {
   it("isola os treinos pelo dono do aluno", async () => {
     await expect(listWorkouts(db, otherUser, "student-1")).rejects.toThrowError("student_not_found");
     await expect(createWorkout(db, otherUser, "student-1", { name: "Performance", objective: "performance", frequencyPerWeek: 3, startDate: "2026-09-06", endDate: "2026-10-06" })).rejects.toThrowError("student_not_found");
+  });
+});
+
+describe("workout overview", () => {
+  it("agrega o treino ativo, calcula o status sem treino e pagina por aluno", async () => {
+    await db.execute("INSERT INTO students (id, owner_user_id, name) VALUES ('student-2', 'user-1', 'Bruna Souza'), ('student-3', 'user-1', 'Carlos Lima'), ('student-4', 'user-1', 'Daniela Alves'), ('student-5', 'user-1', 'Eduardo Lima')");
+    await createWorkout(db, user, "student-1", { name: "Força base", objective: "hipertrofia", frequencyPerWeek: 4, startDate: "2026-09-06", endDate: "2099-10-06" });
+    await createWorkout(db, user, "student-3", { name: "Corrida", objective: "performance", frequencyPerWeek: 3, startDate: "2026-09-06", endDate: "2099-10-06" });
+    await createWorkout(db, user, "student-4", { name: "Reabilitação antiga", objective: "lesao", frequencyPerWeek: 2, startDate: "2019-01-01", endDate: "2020-01-01" });
+    await createWorkout(db, user, "student-5", { name: "Reabilitação recente", objective: "lesao", frequencyPerWeek: 2, startDate: "2024-01-01", endDate: "2025-01-01" });
+
+    const firstPage = await listWorkoutOverview(db, user, { page: 1 });
+    expect(firstPage.total).toBe(5);
+    expect(firstPage.pageSize).toBe(10);
+    expect(firstPage.items.map((item) => item.student.name)).toEqual(["Daniela Alves", "Eduardo Lima", "Ana Lima", "Carlos Lima", "Bruna Souza"]);
+    expect(firstPage.items[0].activeWorkout?.name).toBe("Reabilitação antiga");
+    expect(firstPage.items[0].status).toBe("expired");
+    expect(firstPage.items[1].activeWorkout?.name).toBe("Reabilitação recente");
+    expect(firstPage.items[1].status).toBe("expired");
+    expect(firstPage.items[2].activeWorkout?.name).toBe("Força base");
+    expect(firstPage.items[2].status).toBe("on_track");
+    expect(firstPage.items[4].activeWorkout).toBeNull();
+    expect(firstPage.items[4].status).toBe("no_workout");
+  });
+
+  it("filtra por nome e status sem misturar alunos de outro proprietário", async () => {
+    await db.execute("INSERT INTO students (id, owner_user_id, name) VALUES ('student-2', 'user-1', 'Bruna Souza'), ('student-other', 'user-2', 'Bruna Outro')");
+    const result = await listWorkoutOverview(db, user, { page: 1, search: "Bruna", status: "no_workout" });
+    expect(result.total).toBe(1);
+    expect(result.items[0].student.name).toBe("Bruna Souza");
+    expect(result.items[0].status).toBe("no_workout");
   });
 });

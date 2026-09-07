@@ -16,6 +16,7 @@ import { cn, formatDate, formatDateCompact, formatDateOnly } from "../../lib/uti
 import { type Student, type Workout, type WorkoutDeadlineStatus, type WorkoutObjective } from "../../types/api";
 import { StudentForm } from "./student-form";
 import { WorkoutForm } from "../workouts/workout-form";
+import { toast } from "sonner";
 
 export function StudentDetailPage({ edit = false }: { edit?: boolean }) {
   const { id } = useParams();
@@ -123,6 +124,7 @@ function DeleteStudentDrawer({ student, open, onClose, onDeleted }: { student: S
   async function handleDelete() {
     try {
       await mutation.mutateAsync();
+      toast.success("Aluno excluído com sucesso.");
       onDeleted();
     } catch {
       // O erro é exibido no próprio drawer.

@@ -12,7 +12,7 @@ import {
 } from "./access";
 import { createDatabaseClient, type Env, HttpError } from "./shared";
 import { createStudent, deleteStudent, getStudent, listStudents, updateStudent, type StudentInput } from "./students";
-import { createWorkout, listWorkouts, type WorkoutInput } from "./workouts";
+import { createWorkout, isWorkoutOverviewStatus, listWorkoutOverview, listWorkouts, type WorkoutInput } from "./workouts";
 
 const jsonHeaders = { "Content-Type": "application/json; charset=utf-8" };
 
@@ -41,6 +41,14 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
     if (url.pathname === "/students") {
       if (request.method === "GET") return json(await listStudents(db, user, url.searchParams.get("search") || ""), 200, corsHeaders);
       if (request.method === "POST") return json(await createStudent(db, user, await readJson<StudentInput>(request)), 201, corsHeaders);
+    }
+
+    if (request.method === "GET" && url.pathname === "/workouts/overview") {
+      const rawPage = Number(url.searchParams.get("page") || "1");
+      const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+      const rawStatus = url.searchParams.get("status") || "";
+      if (rawStatus && !isWorkoutOverviewStatus(rawStatus)) return json({ error: "invalid_workout_overview_status" }, 400, corsHeaders);
+      return json(await listWorkoutOverview(db, user, { page, search: url.searchParams.get("search") || "", status: rawStatus || undefined }), 200, corsHeaders);
     }
 
     const workoutsMatch = url.pathname.match(/^\/students\/([^/]+)\/workouts$/);

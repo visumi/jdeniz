@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../../components/ui/textarea";
 import { useCreateStudent, useUpdateStudent } from "../../hooks/use-students";
 import { type Student } from "../../types/api";
+import { toast } from "sonner";
 
 const studentSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome do aluno.").max(120, "Use no máximo 120 caracteres."),
@@ -58,9 +59,11 @@ export function StudentForm({ student, drawer = false, open = true, onClose }: S
     });
     if (drawer) {
       form.reset(getDefaultValues(undefined));
+      toast.success(student ? "Cadastro do aluno atualizado." : "Aluno cadastrado com sucesso.");
       onClose?.();
       return;
     }
+    toast.success(student ? "Cadastro do aluno atualizado." : "Aluno cadastrado com sucesso.");
     navigate(`/students/${saved.id}`);
   }
 
