@@ -1,10 +1,11 @@
-import { AlertCircle, ArrowRight, CalendarDays, Check, Dumbbell, Plus, Save, Search, UserRound } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Dumbbell, Plus, Save, Search, UserRound } from "lucide-react";
 import { useDeferredValue, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { StudentAvatar } from "../../components/student-avatar";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { ContentState } from "../../components/ui/content-state";
 import { Drawer } from "../../components/ui/drawer";
 import { Input } from "../../components/ui/input";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../../components/ui/pagination";
@@ -208,11 +209,11 @@ function WizardResultsLoading() {
 }
 
 function OverviewError({ onRetry }: { onRetry: () => void }) {
-  return <div role="alert" className="flex flex-col items-start gap-3 p-6 sm:flex-row sm:items-center"><span className="grid size-10 place-items-center rounded-full bg-red-50 text-red-600"><AlertCircle className="size-5" /></span><div className="flex-1"><p className="font-semibold text-slate-950">Não foi possível carregar os treinos.</p><p className="mt-1 text-sm text-slate-600">Verifique sua conexão e tente novamente.</p></div><Button type="button" variant="secondary" onClick={onRetry}>Tentar novamente</Button></div>;
+  return <ContentState tone="error" title="Não foi possível carregar os treinos." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={onRetry}>Tentar novamente</Button>} />;
 }
 
 function OverviewEmpty({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
-  return <div className="flex flex-col items-center px-5 py-14 text-center"><span className="grid size-12 place-items-center rounded-2xl bg-sky-50 text-sky-600"><UserRound className="size-5" /></span><p className="mt-4 font-semibold text-slate-950">{hasFilters ? "Nenhum aluno corresponde aos filtros." : "Sua base ainda está vazia."}</p><p className="mt-1 max-w-sm text-sm leading-6 text-slate-600">{hasFilters ? "Tente buscar outro nome ou remover o filtro de status." : "Cadastre um aluno para começar a acompanhar seus treinos."}</p>{hasFilters && <Button type="button" variant="secondary" className="mt-5" onClick={onClear}>Limpar filtros</Button>}</div>;
+  return <ContentState icon={UserRound} title={hasFilters ? "Nenhum aluno corresponde aos filtros." : "Sua base ainda está vazia."} description={hasFilters ? "Tente buscar outro nome ou remover o filtro de status." : "Cadastre um aluno para começar a acompanhar seus treinos."} action={hasFilters ? <Button type="button" variant="secondary" onClick={onClear}>Limpar filtros</Button> : undefined} />;
 }
 
 function getStatusLabel(status: WorkoutOverviewStatus): string {

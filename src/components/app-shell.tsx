@@ -1,4 +1,4 @@
-import { Dumbbell, LayoutDashboard, Users } from "lucide-react";
+import { CalendarCheck2, Dumbbell, LayoutDashboard, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/use-auth";
@@ -10,6 +10,7 @@ import { StudentSearch } from "./student-search";
 const navigation = [
   { to: "/dashboard", label: "Início", icon: LayoutDashboard },
   { to: "/students", label: "Alunos", icon: Users },
+  { to: "/lessons", label: "Aulas", icon: CalendarCheck2 },
   { to: "/workouts", label: "Treinos", icon: Dumbbell }
 ];
 

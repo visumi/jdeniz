@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../lib/api";
-import { type Student, type StudentInput } from "../types/api";
+import { type Student, type StudentAttendanceSummary, type StudentInput } from "../types/api";
 
 export function useStudents(search = "", options?: { enabled?: boolean }) {
   return useQuery({
@@ -15,6 +15,14 @@ export function useStudent(id: string | undefined) {
   return useQuery({
     queryKey: ["student", id],
     queryFn: () => apiRequest<Student>(`/students/${encodeURIComponent(id!)}`),
+    enabled: Boolean(id)
+  });
+}
+
+export function useStudentAttendanceSummary(id: string | undefined) {
+  return useQuery({
+    queryKey: ["student-attendance-summary", id],
+    queryFn: () => apiRequest<StudentAttendanceSummary>(`/students/${encodeURIComponent(id!)}/attendance-summary`),
     enabled: Boolean(id)
   });
 }

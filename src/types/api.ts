@@ -81,3 +81,52 @@ export interface WorkoutOverviewPage {
   total: number;
   pageCount: number;
 }
+
+export type LessonStatus = "scheduled" | "completed" | "absent" | "makeup";
+
+export interface LessonStudent {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  credits: number;
+}
+
+export interface Lesson {
+  id: string;
+  studentId: string;
+  student: LessonStudent;
+  lessonDate: string;
+  startTime: string;
+  endTime: string;
+  isMakeup: boolean;
+  status: LessonStatus;
+  statusUpdatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LessonInput {
+  studentId: string;
+  lessonDate: string;
+  startTime: string;
+  endTime: string;
+  isMakeup: boolean;
+}
+
+export interface LessonStatusInput {
+  status: Exclude<LessonStatus, "scheduled">;
+}
+
+export interface LessonsDay {
+  date: string;
+  today: string;
+  items: Lesson[];
+}
+
+export interface StudentAttendanceSummary {
+  studentId: string;
+  checkIns: number;
+  absences: number;
+  credits: number;
+}

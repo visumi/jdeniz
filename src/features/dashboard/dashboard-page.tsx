@@ -158,9 +158,9 @@ function WorkoutStatusSection({ queries }: { queries: Record<WorkoutOverviewStat
 function WorkoutStatusCard({ card, query }: { card: typeof workoutStatusCards[number]; query: ReturnType<typeof useWorkoutOverview> }) {
   const Icon = card.icon;
   const count = query.data?.total;
-  if (query.isPending) return <div aria-hidden="true" className="flex min-h-28 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-4"><Skeleton className="size-9 shrink-0 rounded-lg" /><span className="min-w-0 flex-1 space-y-2"><Skeleton className="h-3 w-28" /><Skeleton className="h-2.5 w-36" /></span><Skeleton className="h-7 w-6" /></div>;
-  return <Link to={`/workouts?status=${card.status}`} className={cn("group flex min-h-28 items-center gap-3 rounded-lg border p-4 transition-[border-color,background-color] duration-200", card.className, card.hoverClassName)}>
-    <span className={cn("grid size-9 shrink-0 place-items-center rounded-lg", card.iconClassName)}><Icon aria-hidden="true" className="size-4" /></span>
+  if (query.isPending) return <div aria-hidden="true" className="flex min-h-20 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3"><Skeleton className="size-8 shrink-0 rounded-lg" /><span className="min-w-0 flex-1 space-y-2"><Skeleton className="h-3 w-28" /><Skeleton className="h-2.5 w-36" /></span><Skeleton className="h-7 w-6" /></div>;
+  return <Link to={`/workouts?status=${card.status}`} className={cn("group flex min-h-20 items-center gap-3 rounded-lg border p-3 transition-[border-color,background-color] duration-200", card.className, card.hoverClassName)}>
+    <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", card.iconClassName)}><Icon aria-hidden="true" className="size-4" /></span>
     <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-950">{card.label}</span><span className="mt-0 block text-xs leading-4 text-slate-600">{card.description}</span></span>
     <span className="shrink-0 self-center text-2xl font-bold leading-none tracking-tight text-slate-950">{query.isPending ? "—" : count ?? 0}</span>
   </Link>;
@@ -183,7 +183,7 @@ function DashboardSkeleton() {
     <section className="space-y-3">
       <div aria-hidden="true" className="h-px bg-sky-100" />
       <div className="space-y-2"><Skeleton className="h-6 w-64 max-w-full" /><Skeleton className="h-4 w-72 max-w-full" /></div>
-      <Card className="overflow-hidden"><CardContent className="grid gap-2 p-4 sm:grid-cols-2 sm:p-5">{[1, 2, 3, 4].map((item) => <div key={item} aria-hidden="true" className="flex min-h-28 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-4"><Skeleton className="size-9 shrink-0 rounded-lg" /><span className="min-w-0 flex-1 space-y-2"><Skeleton className="h-3 w-28" /><Skeleton className="h-2.5 w-36" /></span><Skeleton className="h-7 w-6" /></div>)}</CardContent></Card>
+      <Card className="overflow-hidden"><CardContent className="grid gap-2 p-4 sm:grid-cols-2 sm:p-5">{[1, 2, 3, 4].map((item) => <div key={item} aria-hidden="true" className="flex min-h-20 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3"><Skeleton className="size-8 shrink-0 rounded-lg" /><span className="min-w-0 flex-1 space-y-2"><Skeleton className="h-3 w-28" /><Skeleton className="h-2.5 w-36" /></span><Skeleton className="h-7 w-6" /></div>)}</CardContent></Card>
     </section>
   </div>;
 }

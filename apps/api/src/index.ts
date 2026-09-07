@@ -13,6 +13,7 @@ import {
 import { createDatabaseClient, type Env, HttpError } from "./shared";
 import { createStudent, deleteStudent, getStudent, listStudents, updateStudent, type StudentInput } from "./students";
 import { createWorkout, isWorkoutOverviewStatus, listWorkoutOverview, listWorkouts, type WorkoutInput } from "./workouts";
+import { createLesson, getStudentAttendanceSummary, listLessons, updateLesson, updateLessonStatus, type LessonInput, type LessonStatusInput } from "./lessons";
 
 const jsonHeaders = { "Content-Type": "application/json; charset=utf-8" };
 
@@ -52,6 +53,25 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
       return json(await listWorkoutOverview(db, user, { page, search: url.searchParams.get("search") || "", status: status || undefined }), 200, corsHeaders);
     }
 
+    if (request.method === "GET" && url.pathname === "/lessons") {
+      const date = url.searchParams.get("date") || "";
+      return json(await listLessons(db, user, date), 200, corsHeaders);
+    }
+
+    if (request.method === "POST" && url.pathname === "/lessons") {
+      return json(await createLesson(db, user, await readJson<LessonInput>(request)), 201, corsHeaders);
+    }
+
+    const lessonStatusMatch = url.pathname.match(/^\/lessons\/([^/]+)\/status$/);
+    if (lessonStatusMatch && request.method === "PATCH") {
+      return json(await updateLessonStatus(db, user, decodeURIComponent(lessonStatusMatch[1]), await readJson<LessonStatusInput>(request)), 200, corsHeaders);
+    }
+
+    const lessonMatch = url.pathname.match(/^\/lessons\/([^/]+)$/);
+    if (lessonMatch && request.method === "PATCH") {
+      return json(await updateLesson(db, user, decodeURIComponent(lessonMatch[1]), await readJson<LessonInput>(request)), 200, corsHeaders);
+    }
+
     const workoutsMatch = url.pathname.match(/^\/students\/([^/]+)\/workouts$/);
     if (workoutsMatch) {
       const studentId = decodeURIComponent(workoutsMatch[1]);
@@ -68,6 +88,11 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
         await deleteStudent(db, user, studentId);
         return new Response(null, { status: 204, headers: corsHeaders });
       }
+    }
+
+    const studentSummaryMatch = url.pathname.match(/^\/students\/([^/]+)\/attendance-summary$/);
+    if (studentSummaryMatch && request.method === "GET") {
+      return json(await getStudentAttendanceSummary(db, user, decodeURIComponent(studentSummaryMatch[1])), 200, corsHeaders);
     }
 
     if (url.pathname === "/admin/access-users") {
