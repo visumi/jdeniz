@@ -103,7 +103,8 @@ export function WorkoutsPage() {
       </CardContent>
     </Card>
 
-    {overview.data && overview.data.pageCount > 1 && <OverviewPagination page={overview.data.page} pageCount={overview.data.pageCount} onPageChange={(nextPage) => updateListParams({ page: nextPage })} />}
+    {/* Temporário para testes: manter a paginação visível mesmo com uma única página. */}
+    {overview.data && <OverviewPagination page={overview.data.page} pageCount={overview.data.pageCount} onPageChange={(nextPage) => updateListParams({ page: nextPage })} />}
     <WorkoutCreationWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
   </div>;
 }

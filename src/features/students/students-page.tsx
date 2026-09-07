@@ -1,5 +1,5 @@
 import { AlertCircle, Cake, CalendarDays, CheckCircle2, Mail, Phone, Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { StudentAvatar } from "../../components/student-avatar";
 import { Button } from "../../components/ui/button";
@@ -11,9 +11,11 @@ import { cn, formatDateCompact, formatDateOnly } from "../../lib/utils";
 import { type Student } from "../../types/api";
 import { StudentForm } from "./student-form";
 import { Badge } from "../../components/ui/badge";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../../components/ui/pagination";
 
 export function StudentsPage() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
   const [drawerOpen, setDrawerOpen] = useState(() => searchParams.get("new") === "1");
   const students = useStudents();
@@ -24,6 +26,18 @@ export function StudentsPage() {
       return !normalizedSearch || [student.name, student.email, student.phone].filter(Boolean).some((value) => value!.toLocaleLowerCase("pt-BR").includes(normalizedSearch));
     });
   }, [allStudents, search]);
+  const pageSize = 10;
+  const pageCount = Math.max(1, Math.ceil(filteredStudents.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const visibleStudents = filteredStudents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount));
+  }, [pageCount]);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -43,7 +57,9 @@ export function StudentsPage() {
       <Button type="button" className="w-full sm:w-auto" onClick={() => setDrawerOpen(true)}><Plus className="size-4" />Adicionar aluno</Button>
     </div>
 
-    <Card className="overflow-hidden"><CardHeader className="gap-4 border-b border-sky-100 bg-white p-4 sm:p-5"><div><CardTitle>Cadastros de alunos</CardTitle><p className="mt-1 text-sm text-slate-600">{students.isPending ? "Carregando cadastros…" : `${filteredStudents.length} ${filteredStudents.length === 1 ? "cadastro encontrado" : "cadastros encontrados"}`}</p></div><div className="relative w-full"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-sky-600" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome ou contato" className="border-sky-200 bg-white pl-9" aria-label="Filtrar cadastros de alunos" /></div></CardHeader><CardContent className="p-0">{students.isPending ? <LoadingState /> : students.isError ? <ErrorState onRetry={() => void students.refetch()} /> : filteredStudents.length === 0 ? <EmptyState hasFilters={Boolean(search)} onCreate={() => setDrawerOpen(true)} /> : <><MobileStudentList students={filteredStudents} /><DesktopStudentTable students={filteredStudents} /></>}</CardContent></Card>
+    <Card className="overflow-hidden"><CardHeader className="gap-4 border-b border-sky-100 bg-white p-4 sm:p-5"><div><CardTitle>Cadastros de alunos</CardTitle><p className="mt-1 text-sm text-slate-600">{students.isPending ? "Carregando cadastros…" : `${filteredStudents.length} ${filteredStudents.length === 1 ? "cadastro encontrado" : "cadastros encontrados"}`}</p></div><div className="relative w-full"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-sky-600" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome ou contato" className="border-sky-200 bg-white pl-9" aria-label="Filtrar cadastros de alunos" /></div></CardHeader><CardContent className="p-0">{students.isPending ? <LoadingState /> : students.isError ? <ErrorState onRetry={() => void students.refetch()} /> : filteredStudents.length === 0 ? <EmptyState hasFilters={Boolean(search)} onCreate={() => setDrawerOpen(true)} /> : <><MobileStudentList students={visibleStudents} /><DesktopStudentTable students={visibleStudents} /></>}</CardContent></Card>
+    {/* Temporário para testes: manter a paginação visível mesmo com uma única página. */}
+    {!students.isPending && !students.isError && <StudentsPagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />}
     <StudentForm drawer open={drawerOpen} onClose={closeDrawer} />
   </div>;
 }
@@ -60,6 +76,21 @@ function DesktopStudentTable({ students }: { students: Student[] }) {
 function AttendanceBadge({ mode, className }: { mode: Student["attendanceMode"]; className?: string }) {
   const modeColor = mode === "online" ? "bg-emerald-50 text-emerald-700" : mode === "presencial" ? "bg-violet-50 text-violet-700" : "text-slate-500";
   return <Badge variant={mode ? "secondary" : "outline"} className={cn("w-fit", modeColor, className)}>{mode === "online" ? "Online" : mode === "presencial" ? "Presencial" : "Modalidade não informada"}</Badge>;
+}
+
+function StudentsPagination({ page, pageCount, onPageChange }: { page: number; pageCount: number; onPageChange: (page: number) => void }) {
+  return <Pagination className="justify-end"><PaginationContent><PaginationItem><PaginationPrevious disabled={page === 1} onClick={() => onPageChange(page - 1)} /></PaginationItem>{getPaginationItems(page, pageCount).map((item, index) => <PaginationItem key={`${item}-${index}`}>{item === "ellipsis" ? <PaginationEllipsis /> : <PaginationLink isActive={item === page} aria-label={`Ir para a página ${item}`} onClick={() => onPageChange(item)}>{item}</PaginationLink>}</PaginationItem>)}<PaginationItem><PaginationNext disabled={page === pageCount} onClick={() => onPageChange(page + 1)} /></PaginationItem></PaginationContent></Pagination>;
+}
+
+function getPaginationItems(page: number, pageCount: number): Array<number | "ellipsis"> {
+  const pages = new Set([1, pageCount, page - 1, page, page + 1].filter((value) => value >= 1 && value <= pageCount));
+  const items: Array<number | "ellipsis"> = [];
+  [...pages].sort((a, b) => a - b).forEach((value) => {
+    const previous = items[items.length - 1];
+    if (typeof previous === "number" && value - previous > 1) items.push("ellipsis");
+    items.push(value);
+  });
+  return items;
 }
 
 function LoadingState() {
