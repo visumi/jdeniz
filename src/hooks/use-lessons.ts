@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../lib/api";
-import { type Lesson, type LessonInput, type LessonStatusInput, type LessonsDay } from "../types/api";
+import { type Lesson, type LessonInput, type LessonStatusInput, type LessonsDay, type StudentLessons } from "../types/api";
 
 export function useLessons(date: string) {
   return useQuery({
@@ -8,6 +8,14 @@ export function useLessons(date: string) {
     queryFn: () => apiRequest<LessonsDay>(`/lessons?date=${encodeURIComponent(date)}`),
     enabled: Boolean(date),
     placeholderData: keepPreviousData
+  });
+}
+
+export function useStudentLessons(id: string | undefined) {
+  return useQuery({
+    queryKey: ["student-lessons", id],
+    queryFn: () => apiRequest<StudentLessons>(`/students/${encodeURIComponent(id!)}/lessons`),
+    enabled: Boolean(id)
   });
 }
 

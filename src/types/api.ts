@@ -92,6 +92,7 @@ export interface LessonStudent {
   phone: string | null;
   credits: number;
   activeWorkoutName: string | null;
+  activeWorkoutObjective: WorkoutObjective | null;
 }
 
 export interface Lesson {
@@ -124,6 +125,11 @@ export interface LessonsDay {
   date: string;
   today: string;
   items: Lesson[];
+}
+
+export interface StudentLessons {
+  upcoming: Lesson[];
+  history: Lesson[];
 }
 
 export interface StudentAttendanceSummary {

@@ -13,7 +13,7 @@ import {
 import { createDatabaseClient, type Env, HttpError } from "./shared";
 import { createStudent, deleteStudent, getStudent, listStudents, updateStudent, type StudentInput } from "./students";
 import { createWorkout, isWorkoutOverviewStatus, listWorkoutOverview, listWorkouts, type WorkoutInput } from "./workouts";
-import { createLesson, getStudentAttendanceSummary, listLessons, updateLesson, updateLessonStatus, type LessonInput, type LessonStatusInput } from "./lessons";
+import { createLesson, getStudentAttendanceSummary, listLessons, listStudentLessons, updateLesson, updateLessonStatus, type LessonInput, type LessonStatusInput } from "./lessons";
 
 const jsonHeaders = { "Content-Type": "application/json; charset=utf-8" };
 
@@ -77,6 +77,11 @@ export async function handleRequest(request: Request, env: Env): Promise<Respons
       const studentId = decodeURIComponent(workoutsMatch[1]);
       if (request.method === "GET") return json(await listWorkouts(db, user, studentId), 200, corsHeaders);
       if (request.method === "POST") return json(await createWorkout(db, user, studentId, await readJson<WorkoutInput>(request)), 201, corsHeaders);
+    }
+
+    const studentLessonsMatch = url.pathname.match(/^\/students\/([^/]+)\/lessons$/);
+    if (studentLessonsMatch && request.method === "GET") {
+      return json(await listStudentLessons(db, user, decodeURIComponent(studentLessonsMatch[1])), 200, corsHeaders);
     }
 
     const studentMatch = url.pathname.match(/^\/students\/([^/]+)$/);

@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  CalendarCheck2,
   CalendarPlus,
   Cake,
   CheckCircle2,
@@ -13,10 +14,12 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Skeleton } from "../../components/ui/skeleton";
 import { StudentAvatar } from "../../components/student-avatar";
 import { useAuth } from "../../hooks/use-auth";
+import { useLessons } from "../../hooks/use-lessons";
 import { useStudents } from "../../hooks/use-students";
 import { useWorkoutOverview } from "../../hooks/use-workouts";
 import { cn } from "../../lib/utils";
 import { downloadBirthdayIcs, getBirthdayDateForYear } from "../../lib/calendar";
+import { toDateValue } from "../../components/ui/calendar";
 import { type Student, type WorkoutOverviewStatus } from "../../types/api";
 import { toast } from "sonner";
 
@@ -70,6 +73,7 @@ const workoutStatusCards: Array<{
 export function DashboardPage() {
   const { user } = useAuth();
   const students = useStudents();
+  const todayLessons = useLessons(toDateValue(new Date()));
   const firstName = user?.displayName?.trim().split(/\s+/)[0] || "professor";
   const currentMonth = new Date().getMonth() + 1;
   const birthdays = (students.data || [])
@@ -84,7 +88,7 @@ export function DashboardPage() {
   const workoutQueries = { expired, expiring_soon: expiringSoon, on_track: onTrack, no_workout: noWorkout };
   const isInitialLoading = students.isPending && Object.values(workoutQueries).every((query) => query.isPending);
 
-  return <Card className="space-y-6 border-sky-100 bg-white p-4 sm:p-6 lg:p-7">
+  return <Card className="space-y-6 border-sky-100 bg-white p-4 sm:p-6 lg:p-6">
     {isInitialLoading ? <DashboardSkeleton /> : <>
     <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -98,10 +102,31 @@ export function DashboardPage() {
       </div>
     </section>
 
+    <TodayLessonsSection query={todayLessons} />
     <BirthdaySection birthdays={birthdays} monthYearLabel={monthYearLabel} isPending={students.isPending} isError={students.isError} />
     <WorkoutStatusSection queries={workoutQueries} />
     </>}
   </Card>;
+}
+
+function TodayLessonsSection({ query }: { query: ReturnType<typeof useLessons> }) {
+  const lessonCount = query.data?.items.length ?? 0;
+
+  return <section aria-labelledby="today-lessons-title" className="relative isolate overflow-hidden rounded-xl border border-sky-900/80 bg-sky-950 text-white">
+    <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-16 size-44 rounded-full bg-sky-800/40 blur-3xl" />
+    <div className="relative flex items-center gap-4 p-5 sm:p-6">
+      <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-800/80 text-sky-100"><CalendarCheck2 className="size-5" /></span>
+      <div className="min-w-0 flex-1">
+        <h2 id="today-lessons-title" className="text-sm font-semibold leading-5 text-sky-100">Agendamentos</h2>
+        {query.isPending ? <TodayLessonsSkeleton /> : query.isError ? <p role="alert" className="mt-1 text-sm text-sky-100">Não foi possível carregar a programação.</p> : <p aria-live="polite" className="mt-1.5 flex items-baseline gap-1.5"><span className="text-4xl font-bold leading-none tracking-[-0.03em] text-white">{lessonCount}</span><span className="text-sm font-medium leading-5 text-sky-100">{lessonCount === 1 ? "aula hoje" : "aulas hoje"}</span></p>}
+      </div>
+      <Button asChild size="sm" className="shrink-0 bg-white text-sky-950 hover:bg-sky-50 focus-visible:ring-white"><Link to="/lessons"><CalendarCheck2 className="size-4" />Abrir check-in</Link></Button>
+    </div>
+  </section>;
+}
+
+function TodayLessonsSkeleton() {
+  return <span role="status" aria-label="Carregando aulas de hoje" className="mt-2 block"><Skeleton className="h-8 w-24 bg-sky-800/80" /></span>;
 }
 
 function BirthdaySection({ birthdays, monthYearLabel, isPending, isError }: { birthdays: Student[]; monthYearLabel: string; isPending: boolean; isError: boolean }) {
@@ -176,6 +201,7 @@ function DashboardSkeleton() {
       <div className="space-y-2"><Skeleton className="h-4 w-28" /><Skeleton className="h-8 w-72 max-w-full" /><Skeleton className="h-4 w-80 max-w-full" /></div>
       <div className="flex w-full gap-2 sm:w-auto"><Skeleton className="h-11 flex-1 rounded-lg sm:w-32 sm:flex-none" /><Skeleton className="h-11 flex-1 rounded-lg sm:w-28 sm:flex-none" /></div>
     </section>
+    <section className="overflow-hidden rounded-xl border border-sky-900/80 bg-sky-950"><div className="flex items-center gap-4 p-5 sm:p-6"><Skeleton className="size-11 shrink-0 rounded-xl bg-sky-800/80" /><div className="min-w-0 flex-1 space-y-2"><Skeleton className="h-3 w-24 bg-sky-800/80" /><Skeleton className="h-8 w-20 bg-sky-800/80" /></div><Skeleton className="h-9 w-32 rounded-md bg-white/80" /></div></section>
     <section className="overflow-hidden rounded-xl border border-amber-200 bg-white">
       <div className="flex items-start gap-3 border-b border-amber-200/80 px-5 py-4 sm:px-6"><Skeleton className="size-10 shrink-0 rounded-xl" /><div className="space-y-1"><Skeleton className="h-4 w-32" /><Skeleton className="h-3 w-28" /></div></div>
       <div className="bg-white p-4 sm:p-5"><BirthdaySkeleton /></div>

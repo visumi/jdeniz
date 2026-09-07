@@ -43,7 +43,7 @@ describe("LessonForm", () => {
   });
 
   it("preenche a edição e mantém o aluno fixo", () => {
-    render(<LessonForm open onClose={vi.fn()} defaultDate="2099-01-01" lesson={{ id: "lesson-1", studentId: "student-1", student: { id: "student-1", name: "Ana Lima", email: null, phone: null, credits: 2, activeWorkoutName: null }, lessonDate: "2099-01-02", startTime: "08:00", endTime: "09:00", isMakeup: false, status: "scheduled", statusUpdatedAt: null, createdAt: "", updatedAt: "" }} />);
+    render(<LessonForm open onClose={vi.fn()} defaultDate="2099-01-01" lesson={{ id: "lesson-1", studentId: "student-1", student: { id: "student-1", name: "Ana Lima", email: null, phone: null, credits: 2, activeWorkoutName: null, activeWorkoutObjective: null }, lessonDate: "2099-01-02", startTime: "08:00", endTime: "09:00", isMakeup: false, status: "scheduled", statusUpdatedAt: null, createdAt: "", updatedAt: "" }} />);
 
     expect(screen.getByText("Ana Lima")).toBeInTheDocument();
     expect(screen.getByText("O aluno não pode ser trocado nesta edição.")).toBeInTheDocument();

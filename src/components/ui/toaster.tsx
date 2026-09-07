@@ -18,9 +18,9 @@ export function Toaster() {
     mobileOffset={{ bottom: "5.5rem", left: "0.75rem", right: "0.75rem" }}
     toastOptions={{
       classNames: {
-        toast: "border-sky-100 bg-white text-slate-950 shadow-[0_4px_8px_rgba(15,23,42,0.16)]",
-        title: "text-sm font-semibold text-slate-950",
-        description: "text-sm text-slate-600"
+        toast: "font-sans border-sky-100 bg-white text-slate-950 shadow-[0_4px_8px_rgba(15,23,42,0.16)]",
+        title: "font-sans text-sm font-semibold text-slate-950",
+        description: "font-sans text-sm text-slate-600"
       }
     }}
   />;

@@ -1,4 +1,4 @@
-import { ArrowLeft, Cake, CalendarDays, Check, Coins, Dumbbell, FileText, Pencil, Phone, Plus, Trash2, TriangleAlert, X, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Cake, CalendarCheck2, CalendarDays, Check, Coins, Dumbbell, FileText, Pencil, Phone, Repeat, Trash2, TriangleAlert, X, type LucideIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { StudentAvatar } from "../../components/student-avatar";
@@ -11,12 +11,13 @@ import { ContentState } from "../../components/ui/content-state";
 import { Drawer } from "../../components/ui/drawer";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../../components/ui/pagination";
 import { Skeleton } from "../../components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { useStudentLessons } from "../../hooks/use-lessons";
 import { useDeleteStudent, useStudent, useStudentAttendanceSummary } from "../../hooks/use-students";
 import { useWorkouts } from "../../hooks/use-workouts";
 import { cn, formatDate, formatDateCompact, formatDateOnly } from "../../lib/utils";
-import { type Student, type Workout, type WorkoutDeadlineStatus, type WorkoutObjective } from "../../types/api";
+import { type Lesson, type LessonStatus, type Student, type Workout, type WorkoutDeadlineStatus, type WorkoutObjective } from "../../types/api";
 import { StudentForm } from "./student-form";
-import { WorkoutForm } from "../workouts/workout-form";
 import { toast } from "sonner";
 
 export function StudentDetailPage({ edit = false }: { edit?: boolean }) {
@@ -24,17 +25,17 @@ export function StudentDetailPage({ edit = false }: { edit?: boolean }) {
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [workoutOpen, setWorkoutOpen] = useState(false);
   const student = useStudent(id);
   const attendanceSummary = useStudentAttendanceSummary(id);
   const workouts = useWorkouts(id);
+  const studentLessons = useStudentLessons(edit ? undefined : id);
   if (student.isPending) return <StudentDetailSkeleton />;
   if (student.isError || !student.data) return <div className="space-y-5"><StudentBreadcrumb current="Aluno" /><Card><CardContent className="p-6"><p className="font-semibold">Aluno não encontrado.</p><p className="mt-1 text-sm text-muted-foreground">O cadastro pode ter sido removido ou você não tem acesso a ele.</p></CardContent></Card></div>;
   if (edit) return <StudentForm student={student.data} />;
 
   const currentStudent = student.data;
   const contact = currentStudent.phone || "Cadastro básico";
-  return <div className="space-y-5"><StudentBreadcrumb current={currentStudent.name} />{currentStudent.observations && <Alert className="border-amber-300 bg-amber-50 text-amber-950 [&>svg]:text-amber-700"><TriangleAlert className="mt-0.5 size-4 shrink-0" /><div className="min-w-0"><p className="font-semibold">Observações</p><AlertDescription className="text-slate-600">{currentStudent.observations}</AlertDescription></div></Alert>}<Card className="overflow-hidden"><div className="relative flex flex-col gap-5 bg-sky-50/70 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div className="flex min-w-0 items-center gap-4 pr-20 sm:pr-0"><StudentAvatar name={currentStudent.name} size={56} /><div className="min-w-0"><div className="flex min-w-0 items-center gap-2"><h1 className="truncate text-3xl font-bold tracking-tight text-slate-950">{currentStudent.name}</h1><div className="absolute right-5 top-5 sm:static sm:shrink-0"><AttendanceBadge mode={currentStudent.attendanceMode} /></div></div><p className="mt-1 flex min-w-0 items-center gap-1.5 truncate text-sm text-slate-600"><Phone aria-hidden="true" className="size-3.5 shrink-0 text-sky-600" />{contact}</p></div></div><div className="grid w-full grid-cols-2 gap-3 sm:w-auto"><Button type="button" className="w-full sm:w-auto" onClick={() => setEditOpen(true)}><Pencil className="size-4" />Editar cadastro</Button><Button type="button" variant="destructive" className="w-full sm:w-auto" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" />Excluir</Button></div></div><CardContent className="grid grid-cols-2 gap-4 border-t border-sky-100 p-4 sm:gap-x-6 sm:gap-y-6 sm:p-6"><InfoItem icon={Cake} label="Data de nascimento" value={formatDateOnly(currentStudent.birthDate)} /><InfoItem icon={CalendarDays} label="Data de início" value={formatDateOnly(currentStudent.startDate)} /></CardContent></Card><StudentStats credits={attendanceSummary.data?.credits ?? currentStudent.credits} checkIns={attendanceSummary.isPending || attendanceSummary.isError ? "—" : attendanceSummary.data.checkIns} absences={attendanceSummary.isPending || attendanceSummary.isError ? "—" : attendanceSummary.data.absences} /><CurrentWorkoutSection workouts={workouts.data || []} isPending={workouts.isPending} isError={workouts.isError} onRetry={() => void workouts.refetch()} onCreate={() => setWorkoutOpen(true)} /><StudentForm student={currentStudent} drawer open={editOpen} onClose={() => setEditOpen(false)} /><WorkoutForm studentId={currentStudent.id} open={workoutOpen} onClose={() => setWorkoutOpen(false)} /><DeleteStudentDrawer student={currentStudent} open={deleteOpen} onClose={() => setDeleteOpen(false)} onDeleted={() => navigate("/students", { replace: true })} /></div>;
+  return <div className="space-y-5"><StudentBreadcrumb current={currentStudent.name} />{currentStudent.observations && <Alert className="border-amber-300 bg-amber-50 text-amber-950 [&>svg]:text-amber-700"><TriangleAlert className="mt-0.5 size-4 shrink-0" /><div className="min-w-0"><p className="font-semibold">Observações</p><AlertDescription className="text-slate-600">{currentStudent.observations}</AlertDescription></div></Alert>}<Card className="overflow-hidden"><div className="relative flex flex-col gap-5 bg-sky-50/70 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div className="flex min-w-0 items-center gap-4 pr-20 sm:pr-0"><StudentAvatar name={currentStudent.name} size={56} /><div className="min-w-0"><div className="flex min-w-0 items-center gap-2"><h1 className="truncate text-3xl font-bold tracking-tight text-slate-950">{currentStudent.name}</h1><div className="absolute right-5 top-5 sm:static sm:shrink-0"><AttendanceBadge mode={currentStudent.attendanceMode} /></div></div><p className="mt-1 flex min-w-0 items-center gap-1.5 truncate text-sm text-slate-600"><Phone aria-hidden="true" className="size-3.5 shrink-0 text-sky-600" />{contact}</p></div></div><div className="grid w-full grid-cols-2 gap-3 sm:w-auto"><Button type="button" className="w-full sm:w-auto" onClick={() => setEditOpen(true)}><Pencil className="size-4" />Editar cadastro</Button><Button type="button" variant="destructive" className="w-full sm:w-auto" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" />Excluir</Button></div></div><CardContent className="grid grid-cols-2 gap-4 border-t border-sky-100 p-4 sm:gap-x-6 sm:gap-y-6 sm:p-6"><InfoItem icon={Cake} label="Data de nascimento" value={formatDateOnly(currentStudent.birthDate)} /><InfoItem icon={CalendarDays} label="Data de início" value={formatDateOnly(currentStudent.startDate)} /></CardContent></Card><StudentStats credits={attendanceSummary.data?.credits ?? currentStudent.credits} checkIns={attendanceSummary.isPending || attendanceSummary.isError ? "—" : attendanceSummary.data.checkIns} absences={attendanceSummary.isPending || attendanceSummary.isError ? "—" : attendanceSummary.data.absences} /><StudentActivityTabs workouts={workouts.data || []} workoutsPending={workouts.isPending} workoutsError={workouts.isError} onRetryWorkouts={() => void workouts.refetch()} lessons={studentLessons} /><StudentForm student={currentStudent} drawer open={editOpen} onClose={() => setEditOpen(false)} /><DeleteStudentDrawer student={currentStudent} open={deleteOpen} onClose={() => setDeleteOpen(false)} onDeleted={() => navigate("/students", { replace: true })} /></div>;
 }
 
 function StudentBreadcrumb({ current }: { current: string }) {
@@ -45,7 +46,63 @@ function StudentStats({ credits, checkIns, absences }: { credits: number; checkI
   return <div className="grid grid-cols-3 gap-3"><StatCard icon={Coins} label="Créditos" value={credits} tone="amber" /><StatCard icon={Check} label="Check-ins" value={checkIns} tone="emerald" /><StatCard icon={X} label="Faltas" value={absences} tone="red" /></div>;
 }
 
-function CurrentWorkoutSection({ workouts, isPending, isError, onRetry, onCreate }: { workouts: Workout[]; isPending: boolean; isError: boolean; onRetry: () => void; onCreate: () => void }) {
+function StudentActivityTabs({ workouts, workoutsPending, workoutsError, onRetryWorkouts, lessons }: { workouts: Workout[]; workoutsPending: boolean; workoutsError: boolean; onRetryWorkouts: () => void; lessons: ReturnType<typeof useStudentLessons> }) {
+  return <Tabs defaultValue="workouts" className="space-y-1">
+    <TabsList aria-label="Atividade do aluno" className="rounded-xl border border-sky-100 bg-sky-50/70 p-1.5">
+      <TabsTrigger value="workouts" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white data-[state=active]:hover:text-white"><Dumbbell aria-hidden="true" className="size-4" />Treinos</TabsTrigger>
+      <TabsTrigger value="checkins" className="data-[state=active]:bg-sky-600 data-[state=active]:text-white data-[state=active]:hover:text-white"><CalendarCheck2 aria-hidden="true" className="size-4" />Aulas</TabsTrigger>
+    </TabsList>
+    <TabsContent value="workouts"><CurrentWorkoutSection workouts={workouts} isPending={workoutsPending} isError={workoutsError} onRetry={onRetryWorkouts} /></TabsContent>
+    <TabsContent value="checkins"><StudentCheckinsSection query={lessons} /></TabsContent>
+  </Tabs>;
+}
+
+function StudentCheckinsSection({ query }: { query: ReturnType<typeof useStudentLessons> }) {
+  const [historyPage, setHistoryPage] = useState(1);
+  const pageSize = 5;
+  const pageCount = query.data ? Math.ceil(query.data.history.length / pageSize) : 0;
+  const pageLimit = Math.max(pageCount, 1);
+
+  useEffect(() => {
+    if (historyPage > pageLimit) setHistoryPage(pageLimit);
+  }, [historyPage, pageLimit]);
+
+  if (query.isPending) return <StudentLessonsSkeleton />;
+  if (query.isError || !query.data) return <Card><CardContent className="p-0"><ContentState tone="error" title="Não foi possível carregar os check-ins." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={() => void query.refetch()}>Tentar novamente</Button>} /></CardContent></Card>;
+
+  const currentPage = Math.min(historyPage, pageLimit);
+  const historyItems = query.data.history.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  return <div className="space-y-3"><UpcomingLessonsSection lessons={query.data.upcoming} /><section aria-labelledby="student-lesson-history-title" className="space-y-3"><h2 id="student-lesson-history-title" className="sr-only">Histórico de check-ins</h2>{query.data.history.length === 0 ? <Card><CardContent className="p-0"><ContentState title="Nenhum check-in registrado" description="Os registros aparecerão aqui após cada aula." className="min-h-32 py-8" /></CardContent></Card> : <div className="-mt-1 mx-3 space-y-3 sm:mx-6"><div className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">{historyItems.map((lesson) => <StudentLessonRow key={lesson.id} lesson={lesson} />)}</div><HistoryPagination page={currentPage} pageCount={pageCount} onPageChange={setHistoryPage} /></div>}</section></div>;
+}
+
+function UpcomingLessonsSection({ lessons }: { lessons: Lesson[] }) {
+  return <section aria-labelledby="student-upcoming-lessons-title" className="space-y-3"><div><h2 id="student-upcoming-lessons-title" className="text-xl font-bold tracking-tight text-slate-950">Aulas</h2><p className="mt-1 text-sm leading-5 text-slate-600">Aulas já agendadas para este aluno.</p></div>{lessons.length === 0 ? <Card><CardContent className="p-0"><ContentState icon={CalendarDays} title="Nenhuma aula agendada" description="As próximas aulas deste aluno aparecerão aqui." className="min-h-32 py-8" /></CardContent></Card> : <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 divide-y divide-slate-200">{lessons.map((lesson) => <UpcomingLessonCard key={lesson.id} lesson={lesson} />)}</div>}</section>;
+}
+
+function UpcomingLessonCard({ lesson }: { lesson: Lesson }) {
+  const status = studentLessonStatuses[lesson.status];
+  return <div className="flex items-center gap-3 bg-white px-3 py-3 sm:px-4 sm:py-4"><div className="grid min-w-20 shrink-0 place-items-center rounded-lg bg-sky-50 px-2 py-2 text-center"><p className="text-sm font-bold text-sky-950">{formatDateCompact(lesson.lessonDate)}</p><p className="mt-0.5 text-xs text-sky-700">{lesson.startTime}–{lesson.endTime}</p></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-950">{lesson.student.activeWorkoutName || "Nenhum treino encontrado"}</p><p className="mt-0.5 truncate text-xs text-slate-600">{lesson.student.activeWorkoutObjective ? getObjectiveLabel(lesson.student.activeWorkoutObjective) : "Nenhum objetivo definido"}</p></div><Badge variant="outline" className={cn("shrink-0 gap-1.5 px-2 py-0.5 text-[11px]", status.className)}><CalendarCheck2 aria-hidden="true" className="size-3.5" />{status.label}</Badge></div>;
+}
+
+function StudentLessonRow({ lesson }: { lesson: Lesson }) {
+  const status = studentLessonStatuses[lesson.status];
+  const StatusIcon = lesson.status === "makeup" ? Repeat : status.icon;
+  return <div className="flex items-center gap-3 px-3 py-3 sm:px-4"><div className="w-20 shrink-0"><p className="text-sm font-bold text-slate-950">{formatDateCompact(lesson.lessonDate)}</p><p className="mt-0.5 text-xs text-slate-500">{lesson.startTime}–{lesson.endTime}</p></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-950">{lesson.student.activeWorkoutName || "Nenhum treino encontrado"}</p><p className="mt-0.5 truncate text-xs text-slate-600">{lesson.student.activeWorkoutObjective ? getObjectiveLabel(lesson.student.activeWorkoutObjective) : "Nenhum objetivo definido"}</p></div><Badge variant="outline" className={cn("shrink-0 gap-1.5 px-2 py-0.5 text-[11px]", status.className)}><StatusIcon aria-hidden="true" className="size-3.5" />{status.label}</Badge></div>;
+}
+
+const studentLessonStatuses: Record<LessonStatus, { label: string; description: string; className: string; icon: LucideIcon }> = {
+  scheduled: { label: "Agendada", description: "Aula programada", className: "border-sky-200 bg-sky-50 text-sky-800", icon: CalendarCheck2 },
+  completed: { label: "Check-in", description: "Presença registrada", className: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: Check },
+  absent: { label: "Falta", description: "Falta registrada", className: "border-red-200 bg-red-50 text-red-800", icon: X },
+  makeup: { label: "Reposição", description: "Reposição registrada", className: "border-amber-200 bg-amber-50 text-amber-900", icon: Repeat }
+};
+
+function StudentLessonsSkeleton() {
+  return <div role="status" aria-label="Carregando check-ins" className="space-y-6"><section className="space-y-3"><div className="space-y-2"><Skeleton className="h-5 w-32" /><Skeleton className="h-3 w-52 max-w-full" /></div><Card><CardContent className="flex items-center gap-3 p-4"><Skeleton className="h-12 w-20" /><span className="min-w-0 flex-1 space-y-1.5"><Skeleton className="h-3 w-32" /><Skeleton className="h-2.5 w-24" /></span><Skeleton className="h-5 w-20 rounded-full" /></CardContent></Card></section><section className="space-y-3"><div className="space-y-2"><Skeleton className="h-5 w-40" /><Skeleton className="h-3 w-64 max-w-full" /></div><Card><CardContent className="divide-y divide-slate-200 p-0">{[1, 2, 3].map((item) => <div key={item} className="flex items-center gap-3 px-3 py-3 sm:px-4"><Skeleton className="h-8 w-20" /><span className="min-w-0 flex-1 space-y-1.5"><Skeleton className="h-3 w-32" /><Skeleton className="h-2.5 w-24" /></span><Skeleton className="h-5 w-20 rounded-full" /></div>)}</CardContent></Card></section></div>;
+}
+
+function CurrentWorkoutSection({ workouts, isPending, isError, onRetry }: { workouts: Workout[]; isPending: boolean; isError: boolean; onRetry: () => void }) {
   const activeWorkout = workouts.find((workout) => workout.active);
   const history = workouts.filter((workout) => !workout.active);
   const pageSize = 10;
@@ -58,7 +115,7 @@ function CurrentWorkoutSection({ workouts, isPending, isError, onRetry, onCreate
     if (historyPage > Math.max(pageCount, 1)) setHistoryPage(Math.max(pageCount, 1));
   }, [historyPage, pageCount]);
 
-  return <section aria-labelledby="current-workout-title" className="space-y-3 border-t border-sky-100 pt-5"><div className="flex items-center justify-between gap-3"><h2 id="current-workout-title" className="text-xl font-bold tracking-tight text-slate-950">Treinos</h2><Button type="button" size="sm" onClick={onCreate}><Plus className="size-4" />Novo treino</Button></div>{isPending ? <WorkoutSkeleton /> : isError ? <Card><CardContent className="p-0"><ContentState tone="error" title="Não foi possível carregar o treino." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={onRetry}>Tentar novamente</Button>} /></CardContent></Card> : <>{activeWorkout ? <WorkoutSummary workout={activeWorkout} /> : <Card><CardContent className="p-0"><ContentState icon={Dumbbell} title="Nenhum treino ativo" description="Crie o primeiro treino para iniciar o acompanhamento deste aluno." /></CardContent></Card>}{history.length > 0 && <WorkoutHistory workouts={pageWorkouts} page={currentPage} pageCount={pageCount} onPageChange={setHistoryPage} />}</>}</section>;
+  return <section aria-labelledby="current-workout-title" className="space-y-3"><div><h2 id="current-workout-title" className="text-xl font-bold tracking-tight text-slate-950">Treinos</h2><p className="mt-1 text-sm leading-5 text-slate-600">Acompanhamento atual e histórico do aluno.</p></div>{isPending ? <WorkoutSkeleton /> : isError ? <Card><CardContent className="p-0"><ContentState tone="error" title="Não foi possível carregar o treino." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={onRetry}>Tentar novamente</Button>} /></CardContent></Card> : <>{activeWorkout ? <WorkoutSummary workout={activeWorkout} /> : <Card><CardContent className="p-0"><ContentState icon={Dumbbell} title="Nenhum treino ativo" description="Os treinos cadastrados para este aluno aparecerão aqui." /></CardContent></Card>}{history.length > 0 && <WorkoutHistory workouts={pageWorkouts} page={currentPage} pageCount={pageCount} onPageChange={setHistoryPage} />}</>}</section>;
 }
 
 function WorkoutHistory({ workouts, page, pageCount, onPageChange }: { workouts: Workout[]; page: number; pageCount: number; onPageChange: (page: number) => void }) {

@@ -1,7 +1,7 @@
 import { createClient, type Client } from "@libsql/client/node";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type AuthUser } from "../src/shared";
-import { createLesson, getStudentAttendanceSummary, updateLesson, updateLessonStatus, validateLessonInput } from "../src/lessons";
+import { createLesson, getStudentAttendanceSummary, listStudentLessons, updateLesson, updateLessonStatus, validateLessonInput } from "../src/lessons";
 import { getTodayDate } from "../src/workouts";
 
 const user: AuthUser = { uid: "user-1", email: "owner@example.com", name: "Professor", picture: null, allowed: true, role: "owner" };
@@ -88,5 +88,19 @@ describe("lesson lifecycle", () => {
     await updateLessonStatus(db, user, "past-lesson", { status: "absent" });
     const future = await createLesson(db, user, { studentId: "student-1", lessonDate: "2099-03-01", startTime: "08:00", endTime: "09:00", isMakeup: false });
     await expect(updateLessonStatus(db, user, future.id, { status: "completed" })).rejects.toThrowError("lesson_in_future");
+  });
+
+  it("separa próximas aulas do histórico do aluno", async () => {
+    await db.execute({ sql: "INSERT INTO workouts (id, student_id, name, objective, frequency_per_week, start_date, end_date, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)", args: ["workout-1", "student-1", "Treino de saúde", "saude_longevidade", 2, "2020-01-01", "2099-12-31"] });
+    const upcoming = await createLesson(db, user, { studentId: "student-1", lessonDate: "2099-01-01", startTime: "08:00", endTime: "09:00", isMakeup: false });
+    const history = await db.execute({ sql: "INSERT INTO lessons (id, student_id, lesson_date, start_time, end_time, status, status_updated_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)", args: ["history-lesson", "student-1", "2020-01-01", "08:00", "09:00", "completed"] });
+    expect(history.rowsAffected).toBe(1);
+
+    const result = await listStudentLessons(db, user, "student-1");
+
+    expect(result.upcoming.map((lesson) => lesson.id)).toEqual([upcoming.id]);
+    expect(result.history.map((lesson) => lesson.id)).toEqual(["history-lesson"]);
+    expect(result.upcoming[0].student).toMatchObject({ activeWorkoutName: "Treino de saúde", activeWorkoutObjective: "saude_longevidade" });
+    expect(result.history[0].student).toMatchObject({ activeWorkoutName: "Treino de saúde", activeWorkoutObjective: "saude_longevidade" });
   });
 });

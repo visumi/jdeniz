@@ -1,5 +1,5 @@
 import { type Client } from "@libsql/client/web";
-import { getTodayDate } from "./workouts";
+import { getTodayDate, isWorkoutObjective, type WorkoutObjective } from "./workouts";
 import { type AuthUser, type DbRow, HttpError, readDbNullableString, readDbString } from "./shared";
 
 type DbExecutor = Pick<Client, "execute">;
@@ -28,6 +28,7 @@ export interface Lesson {
     phone: string | null;
     credits: number;
     activeWorkoutName: string | null;
+    activeWorkoutObjective: WorkoutObjective | null;
   };
   lessonDate: string;
   startTime: string;
@@ -43,6 +44,11 @@ export interface LessonsDay {
   date: string;
   today: string;
   items: Lesson[];
+}
+
+export interface StudentLessons {
+  upcoming: Lesson[];
+  history: Lesson[];
 }
 
 export interface StudentAttendanceSummary {
@@ -76,7 +82,8 @@ const lessonColumns = `
   students.email AS student_email,
   students.phone AS student_phone,
   students.credits AS student_credits,
-  workouts.name AS active_workout_name`;
+  workouts.name AS active_workout_name,
+  workouts.objective AS active_workout_objective`;
 
 export function validateLessonInput(payload: LessonInput, options: { requireFutureOrToday?: boolean } = {}): ValidatedLessonInput {
   const studentId = payload.studentId?.trim();
@@ -104,6 +111,26 @@ export async function listLessons(db: Client, user: AuthUser, lessonDate: string
     args: [user.uid, lessonDate]
   });
   return { date: lessonDate, today: getTodayDate(), items: result.rows.map((row) => mapLesson(row as DbRow)) };
+}
+
+export async function listStudentLessons(db: Client, user: AuthUser, studentId: string): Promise<StudentLessons> {
+  const today = getTodayDate();
+  const student = await db.execute({ sql: "SELECT id FROM students WHERE id = ? AND owner_user_id = ? LIMIT 1", args: [studentId, user.uid] });
+  if (!student.rows[0]) throw new HttpError(404, "student_not_found");
+
+  const upcoming = await db.execute({
+    sql: `SELECT ${lessonColumns} FROM lessons INNER JOIN students ON students.id = lessons.student_id LEFT JOIN workouts ON workouts.student_id = students.id AND workouts.active = 1 WHERE students.id = ? AND students.owner_user_id = ? AND lessons.status = 'scheduled' AND lessons.lesson_date >= ? ORDER BY lessons.lesson_date ASC, lessons.start_time ASC, lessons.end_time ASC LIMIT 10`,
+    args: [studentId, user.uid, today]
+  });
+  const history = await db.execute({
+    sql: `SELECT ${lessonColumns} FROM lessons INNER JOIN students ON students.id = lessons.student_id LEFT JOIN workouts ON workouts.student_id = students.id AND workouts.active = 1 WHERE students.id = ? AND students.owner_user_id = ? AND lessons.status <> 'scheduled' ORDER BY lessons.lesson_date DESC, lessons.start_time DESC, lessons.end_time DESC LIMIT 10`,
+    args: [studentId, user.uid]
+  });
+
+  return {
+    upcoming: upcoming.rows.map((row) => mapLesson(row as DbRow)),
+    history: history.rows.map((row) => mapLesson(row as DbRow))
+  };
 }
 
 export async function getStudentAttendanceSummary(db: Client, user: AuthUser, studentId: string): Promise<StudentAttendanceSummary> {
@@ -267,6 +294,9 @@ function mapLesson(row: DbRow): Lesson {
   if (!isLessonStatus(status)) throw new HttpError(500, "invalid_db_lesson_status");
   const isMakeup = readDbInteger(row, "is_makeup");
   if (isMakeup !== 0 && isMakeup !== 1) throw new HttpError(500, "invalid_db_is_makeup");
+  const activeWorkoutObjectiveValue = readDbNullableString(row, "active_workout_objective");
+  if (activeWorkoutObjectiveValue !== null && !isWorkoutObjective(activeWorkoutObjectiveValue)) throw new HttpError(500, "invalid_db_objective");
+  const activeWorkoutObjective: WorkoutObjective | null = activeWorkoutObjectiveValue;
   return {
     id: readDbString(row, "id"),
     studentId: readDbString(row, "student_id"),
@@ -276,7 +306,8 @@ function mapLesson(row: DbRow): Lesson {
       email: readDbNullableString(row, "student_email"),
       phone: readDbNullableString(row, "student_phone"),
       credits: readDbInteger(row, "student_credits"),
-      activeWorkoutName: readDbNullableString(row, "active_workout_name")
+      activeWorkoutName: readDbNullableString(row, "active_workout_name"),
+      activeWorkoutObjective
     },
     lessonDate: readDbString(row, "lesson_date"),
     startTime: readDbString(row, "start_time"),
