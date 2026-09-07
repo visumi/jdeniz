@@ -13,6 +13,7 @@ export interface Student {
   email: string | null;
   phone: string | null;
   credits: number;
+  activeWorkoutName: string | null;
   attendanceMode: "online" | "presencial" | null;
   birthDate: string | null;
   startDate: string | null;
@@ -90,6 +91,7 @@ export interface LessonStudent {
   email: string | null;
   phone: string | null;
   credits: number;
+  activeWorkoutName: string | null;
 }
 
 export interface Lesson {

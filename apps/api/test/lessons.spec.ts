@@ -16,11 +16,13 @@ beforeEach(async () => {
     PRAGMA foreign_keys = ON;
     DROP TABLE IF EXISTS student_credit_ledger;
     DROP TABLE IF EXISTS lessons;
+    DROP TABLE IF EXISTS workouts;
     DROP TABLE IF EXISTS student_profiles;
     DROP TABLE IF EXISTS students;
     DROP TABLE IF EXISTS users;
     CREATE TABLE users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE);
     CREATE TABLE students (id TEXT PRIMARY KEY, owner_user_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT, phone TEXT, credits INTEGER NOT NULL DEFAULT 0 CHECK (credits >= 0), updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE CASCADE);
+    CREATE TABLE workouts (id TEXT PRIMARY KEY, student_id TEXT NOT NULL, name TEXT NOT NULL, objective TEXT NOT NULL, frequency_per_week INTEGER NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, observations TEXT, active INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE);
     CREATE TABLE lessons (id TEXT PRIMARY KEY, student_id TEXT NOT NULL, lesson_date TEXT NOT NULL, start_time TEXT NOT NULL, end_time TEXT NOT NULL, is_makeup INTEGER NOT NULL DEFAULT 0 CHECK (is_makeup IN (0, 1)), status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'completed', 'absent', 'makeup')), status_updated_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, CHECK (start_time < end_time), FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE);
     CREATE TABLE student_credit_ledger (id TEXT PRIMARY KEY, student_id TEXT NOT NULL, lesson_id TEXT, delta INTEGER NOT NULL CHECK (delta <> 0), reason TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL);
     INSERT INTO users (id, email) VALUES ('user-1', 'owner@example.com'), ('user-2', 'other@example.com');

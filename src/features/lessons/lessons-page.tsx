@@ -1,4 +1,4 @@
-import { CalendarCheck2, ChevronLeft, ChevronRight, Clock3, Pencil, Plus, RotateCcw, UserRound } from "lucide-react";
+import { CalendarCheck2, ChevronLeft, ChevronRight, Clock3, Plus, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { StudentAvatar } from "../../components/student-avatar";
@@ -10,7 +10,7 @@ import { DatePicker } from "../../components/ui/date-picker";
 import { Skeleton } from "../../components/ui/skeleton";
 import { useLessons, useUpdateLessonStatus } from "../../hooks/use-lessons";
 import { ApiError } from "../../lib/api";
-import { formatDateOnly } from "../../lib/utils";
+import { cn, formatDateOnly } from "../../lib/utils";
 import { toDateValue, parseDateValue } from "../../components/ui/calendar";
 import { type Lesson, type LessonStatus } from "../../types/api";
 import { LessonForm } from "./lesson-form";
@@ -69,12 +69,12 @@ export function LessonsPage() {
 
     <Card className="overflow-hidden border-sky-100">
       <CardContent className="space-y-4 p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-2"><Button type="button" variant="secondary" size="icon" aria-label="Dia anterior" onClick={() => shiftDate(-1)}><ChevronLeft className="size-4" /></Button><div className="min-w-0 flex-1 text-center"><p className="truncate text-base font-bold capitalize text-slate-950">{formatSelectedDate(selectedDate, apiToday)}</p><p className="mt-1 text-xs text-slate-600">{items.length} {items.length === 1 ? "aula" : "aulas"}</p></div><Button type="button" variant="secondary" size="icon" aria-label="Próximo dia" onClick={() => shiftDate(1)}><ChevronRight className="size-4" /></Button></div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center"><DatePicker aria-label="Escolher dia da agenda" value={selectedDate} onChange={setDate} className="sm:max-w-xs" />{!isToday && <Button type="button" variant="ghost" onClick={() => setDate(apiToday)}><RotateCcw className="size-4" />Hoje</Button>}</div>
+        <div className="flex items-center justify-between gap-2"><Button type="button" variant="secondary" size="icon" aria-label="Dia anterior" onClick={() => shiftDate(-1)}><ChevronLeft className="size-4" /></Button><div className="min-w-0 flex-1 text-center"><DatePicker aria-label="Escolher dia da agenda" value={selectedDate} onChange={setDate} panelAlign="center" className="mx-auto h-auto w-fit max-w-full justify-center rounded-lg border-0 bg-transparent px-2 py-1 text-center text-base font-bold capitalize text-slate-950 transition-colors duration-200 hover:bg-sky-50 hover:text-sky-900 focus-visible:border-transparent focus-visible:bg-sky-50 focus-visible:ring-2" ><span className="truncate">{formatSelectedDate(selectedDate, apiToday)}</span></DatePicker><Badge variant="outline" className="mt-1 border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700">{items.length} {items.length === 1 ? "aula" : "aulas"}</Badge></div><Button type="button" variant="secondary" size="icon" aria-label="Próximo dia" onClick={() => shiftDate(1)}><ChevronRight className="size-4" /></Button></div>
+        {!isToday && <div><Button type="button" variant="ghost" className="w-full rounded-lg bg-sky-50/70 hover:bg-sky-100" onClick={() => setDate(apiToday)}><RotateCcw className="size-4" />Hoje</Button></div>}
       </CardContent>
     </Card>
 
-    {lessons.isPending && !lessons.data ? <LessonsLoading /> : lessons.isError ? <Card><CardContent className="p-0"><ContentState tone="error" title="Não foi possível carregar as aulas." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={() => void lessons.refetch()}>Tentar novamente</Button>} /></CardContent></Card> : items.length === 0 ? <EmptyLessons date={selectedDate} onCreate={openCreate} /> : <section aria-labelledby="lesson-list-title" className="space-y-3"><div className="flex items-center justify-between gap-3"><h2 id="lesson-list-title" className="text-xl font-bold tracking-tight text-slate-950">Programação</h2><span className="text-xs font-semibold text-slate-500">{isToday ? "Hoje" : isPast ? "Histórico" : "Agendado"}</span></div><div className="space-y-3">{items.map((lesson) => <LessonCard key={lesson.id} lesson={lesson} isToday={isToday} isPast={isPast} onEdit={() => openEdit(lesson)} onStatus={(status) => void handleStatus(lesson, status)} isStatusPending={updateStatus.isPending && updateStatus.variables?.id === lesson.id} />)}</div></section>}
+    {lessons.isPending && !lessons.data ? <LessonsLoading /> : lessons.isError ? <Card><CardContent className="p-0"><ContentState tone="error" title="Não foi possível carregar as aulas." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={() => void lessons.refetch()}>Tentar novamente</Button>} /></CardContent></Card> : items.length === 0 ? <EmptyLessons date={selectedDate} onCreate={openCreate} /> : <section aria-labelledby="lesson-list-title" className="space-y-3"><div><h2 id="lesson-list-title" className="text-xl font-bold tracking-tight text-slate-950">Programação</h2></div><div className="space-y-3">{items.map((lesson) => <LessonCard key={lesson.id} lesson={lesson} isToday={isToday} isPast={isPast} onEdit={() => openEdit(lesson)} onStatus={(status) => void handleStatus(lesson, status)} isStatusPending={updateStatus.isPending && updateStatus.variables?.id === lesson.id} />)}</div></section>}
 
     <LessonForm open={formOpen} onClose={() => { setFormOpen(false); setEditingLesson(null); }} defaultDate={selectedDate >= apiToday ? selectedDate : apiToday} lesson={editingLesson} />
   </div>;
@@ -86,17 +86,40 @@ function LessonCard({ lesson, isToday, isPast, onEdit, onStatus, isStatusPending
   const showStatusActions = isToday && lesson.status === "scheduled" || isPast && correcting;
   const isCompleted = lesson.status !== "scheduled";
 
-  return <Card className={lesson.status === "scheduled" ? "border-sky-200" : "border-slate-200"}><CardContent className="space-y-4 p-4 sm:p-5"><div className="flex items-start gap-3"><div className="min-w-16 shrink-0 rounded-lg bg-sky-50 px-2.5 py-2 text-center"><p className="text-sm font-bold leading-5 text-sky-900">{lesson.startTime}</p><p className="text-[11px] text-sky-700">até {lesson.endTime}</p></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><StudentAvatar name={lesson.student.name} size={32} /><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-950">{lesson.student.name}</p><p className="mt-0.5 truncate text-xs text-slate-600">{lesson.student.phone || lesson.student.email || "Cadastro básico"}</p></div></div><div className="flex shrink-0 items-center gap-1">{lesson.isMakeup && <Badge className="bg-amber-100 text-amber-900">Reposição</Badge>}{canEdit && <Button type="button" variant="ghost" size="icon" aria-label={`Editar aula de ${lesson.student.name}`} onClick={onEdit}><Pencil className="size-4" /></Button>}</div></div><div className="mt-3 flex items-center gap-2"><LessonStatusBadge status={lesson.status} />{isToday && lesson.status === "scheduled" && <span className="text-xs text-slate-500">Aguardando status</span>}{!isToday && !isPast && <span className="text-xs text-slate-500">Sem ações até o dia da aula</span>}</div></div></div>{showStatusActions ? <div className="flex flex-col gap-2 border-t border-sky-100 pt-3 sm:flex-row"><Button type="button" size="sm" className="flex-1" disabled={isStatusPending} onClick={() => onStatus("completed")}><CalendarCheck2 className="size-4" />Check-in</Button><Button type="button" size="sm" variant="secondary" className="flex-1" disabled={isStatusPending} onClick={() => onStatus("absent")}><UserRound className="size-4" />Falta</Button>{!lesson.isMakeup && <Button type="button" size="sm" variant="secondary" className="flex-1 border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100" disabled={isStatusPending} onClick={() => onStatus("makeup")}><RotateCcw className="size-4" />Repor</Button>}</div> : isPast ? <div className="flex justify-end border-t border-slate-100 pt-3"><Button type="button" variant="ghost" size="sm" onClick={() => setCorrecting(true)}>{isCompleted ? "Corrigir status" : "Registrar status"}</Button></div> : null}</CardContent></Card>;
+  return <Card className={lesson.status === "scheduled" ? "border-sky-200" : "border-slate-200"}>
+    <CardContent className="space-y-4 p-4 sm:p-5">
+      <div className="min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <StudentAvatar name={lesson.student.name} size={32} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-950">{lesson.student.name}</p>
+              <p className="mt-0.5 truncate text-xs text-slate-600">{lesson.student.activeWorkoutName || "Nenhum treino encontrado"}</p>
+            </div>
+          </div>
+          {canEdit ? <button type="button" aria-label={`Editar aula de ${lesson.student.name}`} className="min-w-16 shrink-0 cursor-pointer rounded-lg bg-sky-50 px-2.5 py-2 text-center transition-colors duration-200 hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500" onClick={onEdit}>
+            <p className="text-sm font-bold leading-5 text-sky-900">{lesson.startTime}</p>
+            <p className="text-[11px] text-sky-700">até {lesson.endTime}</p>
+          </button> : <div className="min-w-16 shrink-0 rounded-lg bg-sky-50 px-2.5 py-2 text-center">
+            <p className="text-sm font-bold leading-5 text-sky-900">{lesson.startTime}</p>
+            <p className="text-[11px] text-sky-700">até {lesson.endTime}</p>
+          </div>}
+        </div>
+        <div className="mt-3"><LessonStatusBadge status={lesson.status} className="w-full justify-center" /></div>
+      </div>
+      {showStatusActions ? <div className="border-t border-sky-100 pt-3"><Button type="button" size="sm" className="w-full" disabled={isStatusPending} onClick={() => onStatus("completed")}><CalendarCheck2 className="size-4" />Check-in</Button></div> : isPast ? <div className="flex justify-end border-t border-slate-100 pt-3"><Button type="button" variant="ghost" size="sm" onClick={() => setCorrecting(true)}>{isCompleted ? "Corrigir status" : "Registrar status"}</Button></div> : null}
+    </CardContent>
+  </Card>;
 }
 
-function LessonStatusBadge({ status }: { status: LessonStatus }) {
+function LessonStatusBadge({ status, className }: { status: LessonStatus; className?: string }) {
   const styles: Record<LessonStatus, { label: string; className: string }> = {
     scheduled: { label: "Agendada", className: "border-sky-200 bg-sky-50 text-sky-800" },
     completed: { label: "Aula feita", className: "bg-emerald-100 text-emerald-800" },
     absent: { label: "Falta", className: "bg-red-100 text-red-800" },
     makeup: { label: "Crédito gerado", className: "bg-amber-100 text-amber-900" }
   };
-  return <Badge variant={status === "scheduled" ? "outline" : "secondary"} className={styles[status].className}>{styles[status].label}</Badge>;
+  return <Badge variant={status === "scheduled" ? "outline" : "secondary"} className={cn(styles[status].className, className)}>{styles[status].label}</Badge>;
 }
 
 function EmptyLessons({ date, onCreate }: { date: string; onCreate: () => void }) {

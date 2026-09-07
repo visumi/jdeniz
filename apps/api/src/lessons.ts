@@ -27,6 +27,7 @@ export interface Lesson {
     email: string | null;
     phone: string | null;
     credits: number;
+    activeWorkoutName: string | null;
   };
   lessonDate: string;
   startTime: string;
@@ -74,7 +75,8 @@ const lessonColumns = `
   students.name AS student_name,
   students.email AS student_email,
   students.phone AS student_phone,
-  students.credits AS student_credits`;
+  students.credits AS student_credits,
+  workouts.name AS active_workout_name`;
 
 export function validateLessonInput(payload: LessonInput, options: { requireFutureOrToday?: boolean } = {}): ValidatedLessonInput {
   const studentId = payload.studentId?.trim();
@@ -98,7 +100,7 @@ export function isLessonStatus(value: string): value is LessonStatus {
 export async function listLessons(db: Client, user: AuthUser, lessonDate: string): Promise<LessonsDay> {
   if (!isValidIsoDate(lessonDate)) throw new HttpError(400, "invalid_date");
   const result = await db.execute({
-    sql: `SELECT ${lessonColumns} FROM lessons INNER JOIN students ON students.id = lessons.student_id WHERE students.owner_user_id = ? AND lessons.lesson_date = ? ORDER BY lessons.start_time ASC, lessons.end_time ASC, students.name COLLATE NOCASE ASC`,
+    sql: `SELECT ${lessonColumns} FROM lessons INNER JOIN students ON students.id = lessons.student_id LEFT JOIN workouts ON workouts.student_id = students.id AND workouts.active = 1 WHERE students.owner_user_id = ? AND lessons.lesson_date = ? ORDER BY lessons.start_time ASC, lessons.end_time ASC, students.name COLLATE NOCASE ASC`,
     args: [user.uid, lessonDate]
   });
   return { date: lessonDate, today: getTodayDate(), items: result.rows.map((row) => mapLesson(row as DbRow)) };
@@ -237,7 +239,7 @@ async function getLesson(db: DbExecutor, user: AuthUser, id: string): Promise<Le
 }
 
 async function getLessonRow(db: DbExecutor, user: AuthUser, id: string): Promise<DbRow & { studentId: string; lessonDate: string; isMakeup: boolean; status: LessonStatus }> {
-  const result = await db.execute({ sql: `SELECT ${lessonColumns} FROM lessons INNER JOIN students ON students.id = lessons.student_id WHERE lessons.id = ? AND students.owner_user_id = ? LIMIT 1`, args: [id, user.uid] });
+  const result = await db.execute({ sql: `SELECT ${lessonColumns} FROM lessons INNER JOIN students ON students.id = lessons.student_id LEFT JOIN workouts ON workouts.student_id = students.id AND workouts.active = 1 WHERE lessons.id = ? AND students.owner_user_id = ? LIMIT 1`, args: [id, user.uid] });
   if (!result.rows[0]) throw new HttpError(404, "lesson_not_found");
   const lesson = mapLesson(result.rows[0] as DbRow);
   return Object.assign(result.rows[0] as DbRow, { studentId: lesson.studentId, lessonDate: lesson.lessonDate, isMakeup: lesson.isMakeup, status: lesson.status });
@@ -273,7 +275,8 @@ function mapLesson(row: DbRow): Lesson {
       name: readDbString(row, "student_name"),
       email: readDbNullableString(row, "student_email"),
       phone: readDbNullableString(row, "student_phone"),
-      credits: readDbInteger(row, "student_credits")
+      credits: readDbInteger(row, "student_credits"),
+      activeWorkoutName: readDbNullableString(row, "active_workout_name")
     },
     lessonDate: readDbString(row, "lesson_date"),
     startTime: readDbString(row, "start_time"),

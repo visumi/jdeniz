@@ -17,6 +17,7 @@ export interface Student {
   email: string | null;
   phone: string | null;
   credits: number;
+  activeWorkoutName: string | null;
   attendanceMode: "online" | "presencial" | null;
   birthDate: string | null;
   startDate: string | null;
@@ -72,6 +73,7 @@ function mapStudent(row: DbRow): Student {
     email: readDbNullableString(row, "email"),
     phone: readDbNullableString(row, "phone"),
     credits: readDbInteger(row, "credits"),
+    activeWorkoutName: readDbNullableString(row, "active_workout_name"),
     attendanceMode: readDbNullableString(row, "attendance_mode") as Student["attendanceMode"],
     birthDate: readDbNullableString(row, "birth_date"),
     startDate: readDbNullableString(row, "start_date"),
@@ -81,8 +83,8 @@ function mapStudent(row: DbRow): Student {
   };
 }
 
-const selectColumns = "students.id, students.name, students.email, students.phone, students.credits, student_profiles.attendance_mode, student_profiles.birth_date, student_profiles.start_date, student_profiles.observations, students.created_at, students.updated_at";
-const studentSource = "students LEFT JOIN student_profiles ON student_profiles.student_id = students.id";
+const selectColumns = "students.id, students.name, students.email, students.phone, students.credits, workouts.name AS active_workout_name, student_profiles.attendance_mode, student_profiles.birth_date, student_profiles.start_date, student_profiles.observations, students.created_at, students.updated_at";
+const studentSource = "students LEFT JOIN student_profiles ON student_profiles.student_id = students.id LEFT JOIN workouts ON workouts.student_id = students.id AND workouts.active = 1";
 
 export async function listStudents(db: Client, user: AuthUser, search = ""): Promise<Student[]> {
   const normalizedSearch = search.trim();
