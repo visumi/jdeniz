@@ -30,7 +30,9 @@ export function LessonsPage() {
   const apiToday = lessons.data?.today || today;
   const items = lessons.data?.items || [];
   const displayItems = sortLessonsForDisplay(items);
-  const lunchDividerIndex = displayItems.findIndex((lesson, index) => index > 0 && lesson.startTime >= "12:00" && displayItems[index - 1].startTime < "12:00");
+  const activeItems = displayItems.filter((lesson) => lesson.status === "scheduled");
+  const inactiveItems = displayItems.filter((lesson) => lesson.status !== "scheduled");
+  const lunchDividerIndex = activeItems.findIndex((lesson, index) => index > 0 && lesson.startTime >= "12:00" && activeItems[index - 1].startTime < "12:00");
   const isSwitchingDate = lessons.isFetching && lessons.isPlaceholderData;
 
   function setDate(nextDate: string) {
@@ -66,6 +68,7 @@ export function LessonsPage() {
 
   const isToday = selectedDate === apiToday;
   const isPast = selectedDate < apiToday;
+  const renderLesson = (lesson: Lesson) => <LessonCard lesson={lesson} isToday={isToday} isPast={isPast} onEdit={() => openEdit(lesson)} onOpenStatus={() => setStatusLesson(lesson)} isStatusPending={updateStatus.isPending && updateStatus.variables?.id === lesson.id} />;
 
   return <div className="space-y-5">
     <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -80,7 +83,7 @@ export function LessonsPage() {
       </CardContent>
     </Card>
 
-    {lessons.isPending && !lessons.data || isSwitchingDate ? <LessonsLoading /> : lessons.isError ? <Card><CardContent className="p-0"><ContentState tone="error" title="Não foi possível carregar as aulas." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={() => void lessons.refetch()}>Tentar novamente</Button>} /></CardContent></Card> : items.length === 0 ? <EmptyLessons date={selectedDate} onCreate={openCreate} /> : <section aria-labelledby="lesson-list-title" className="space-y-3"><div><h2 id="lesson-list-title" className="text-xl font-bold tracking-tight text-slate-950">Programação</h2></div><div className="space-y-3">{displayItems.map((lesson, index) => <Fragment key={lesson.id}>{index === lunchDividerIndex && <div aria-hidden="true" className="flex items-center gap-3 py-1"><span className="h-0 flex-1 border-t-2 border-dashed border-red-500" style={{ borderTopColor: "#ef4444" }} /><span className="shrink-0 rounded-md bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">12h</span><span className="h-0 flex-1 border-t-2 border-dashed border-red-500" style={{ borderTopColor: "#ef4444" }} /></div>}<LessonCard lesson={lesson} isToday={isToday} isPast={isPast} onEdit={() => openEdit(lesson)} onOpenStatus={() => setStatusLesson(lesson)} isStatusPending={updateStatus.isPending && updateStatus.variables?.id === lesson.id} /></Fragment>)}</div></section>}
+    {lessons.isPending && !lessons.data || isSwitchingDate ? <LessonsLoading /> : lessons.isError ? <Card><CardContent className="p-0"><ContentState tone="error" title="Não foi possível carregar as aulas." description="Verifique sua conexão e tente novamente." action={<Button type="button" variant="secondary" onClick={() => void lessons.refetch()}>Tentar novamente</Button>} /></CardContent></Card> : items.length === 0 ? <EmptyLessons date={selectedDate} /> : <section aria-labelledby="lesson-list-title" className="space-y-3"><div><h2 id="lesson-list-title" className="text-xl font-bold tracking-tight text-slate-950">Programação</h2></div><div className="space-y-3">{activeItems.map((lesson, index) => <Fragment key={lesson.id}>{index === lunchDividerIndex && <div aria-hidden="true" className="flex items-center gap-3 py-1"><span className="h-0 flex-1 border-t-2 border-dashed border-red-500" style={{ borderTopColor: "#ef4444" }} /><span className="shrink-0 rounded-md bg-red-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-red-600">12h</span><span className="h-0 flex-1 border-t-2 border-dashed border-red-500" style={{ borderTopColor: "#ef4444" }} /></div>}{renderLesson(lesson)}</Fragment>)}{inactiveItems.map((lesson) => <Fragment key={lesson.id}>{renderLesson(lesson)}</Fragment>)}</div></section>}
 
     <LessonForm open={formOpen} onClose={() => { setFormOpen(false); setEditingLesson(null); }} defaultDate={selectedDate >= apiToday ? selectedDate : apiToday} lesson={editingLesson} />
     <LessonStatusDrawer lesson={statusLesson} open={Boolean(statusLesson)} onClose={() => setStatusLesson(null)} onStatus={(status) => { if (statusLesson) void handleStatus(statusLesson, status); }} isPending={updateStatus.isPending} />
@@ -149,8 +152,8 @@ function LessonStatusBadge({ status, className }: { status: LessonStatus; classN
   return <Badge variant={status === "scheduled" ? "outline" : "secondary"} className={cn(styles[status].className, className)}>{styles[status].label}</Badge>;
 }
 
-function EmptyLessons({ date, onCreate }: { date: string; onCreate: () => void }) {
-  return <Card><CardContent className="p-0"><ContentState icon={Clock3} title={`Nenhuma aula em ${formatDateOnly(date)}`} description="Agende uma aula para acompanhar o horário e registrar o status do atendimento." action={<Button type="button" onClick={onCreate}><Plus className="size-4" />Agendar aula</Button>} /></CardContent></Card>;
+function EmptyLessons({ date }: { date: string }) {
+  return <Card><CardContent className="p-0"><ContentState icon={Clock3} title={`Nenhuma aula em ${formatDateOnly(date)}`} description="Não há aulas registradas para este dia." /></CardContent></Card>;
 }
 
 function LessonsLoading() {
